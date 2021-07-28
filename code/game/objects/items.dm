@@ -73,8 +73,8 @@
 	// This thing can be used to stab eyes out.
 	var/stab_eyes = FALSE
 
-	// Determines whether any religious activity has been carried out on the item.
-	var/blessed = FALSE
+	// Determines whether additional damage is given to this weapon
+	var/blessed = 0
 
 	// Whether this item is currently being swiped.
 	var/swiping = FALSE
@@ -103,9 +103,6 @@
 		if(!output_to_chat)
 			message += "</BODY></HTML>"
 		return message
-	if(!(istype(user, /mob/living/carbon/human) || SSticker) && SSticker.mode.name != "monkey")
-		to_chat(usr, "<span class='warning'>You don't have the dexterity to do this!</span>")
-		return ""
 	user.visible_message("<span class='notice'>[user] has analyzed [M]'s vitals.</span>","<span class='notice'>You have analyzed [M]'s vitals.</span>")
 
 	var/fake_oxy = max(rand(1,40), M.getOxyLoss(), (300 - (M.getToxLoss() + M.getFireLoss() + M.getBruteLoss())))
@@ -318,11 +315,8 @@
 			to_chat(user, "<span class='warning'>\The [src] is far too small for you to pick up.</span>")
 			return
 
-	if(istype(src.loc, /obj/item/weapon/storage))
-		var/obj/item/weapon/storage/S = src.loc
-		S.remove_from_storage(src)
-
 	src.throwing = 0
+
 	if(src.loc == user)
 		//canremove==0 means that object may not be removed. You can still wear it. This only applies to clothing. /N
 		if(!src.canremove)
@@ -340,12 +334,7 @@
 				if(istype(src, /obj/item/clothing/suit/space)) // If the item to be unequipped is a rigid suit
 					if(!user.delay_clothing_u_equip(src))
 						return 0
-				else
-					user.remove_from_mob(src)
-			else
-				user.remove_from_mob(src)
-		else
-			user.remove_from_mob(src)
+
 	else
 		if(isliving(src.loc))
 			return
@@ -364,11 +353,18 @@
 		return
 
 	remove_outline()
-	src.pickup(user)
+	pickup(user)
 	add_fingerprint(user)
-	user.put_in_active_hand(src)
-	return
 
+	if(istype(src.loc, /obj/item/weapon/storage))
+		var/obj/item/weapon/storage/S = src.loc
+		if(!S.remove_from_storage(src, user) || !user.put_in_active_hand(src))
+			forceMove(get_turf(src))
+	else if(loc == user)
+		if(!user.remove_from_mob(src, user) || !user.put_in_active_hand(src))
+			forceMove(get_turf(src))
+	else
+		user.put_in_active_hand(src)
 
 /obj/item/attack_paw(mob/user)
 	if (!user || anchored)
@@ -399,7 +395,7 @@
 		return
 
 	remove_outline()
-	src.pickup(user)
+	pickup(user)
 	user.put_in_active_hand(src)
 	return
 
@@ -435,7 +431,7 @@
 		. = callback.Invoke()
 
 /obj/item/proc/talk_into(mob/M, text)
-	return
+	return FALSE
 
 /obj/item/proc/moved(mob/user, old_loc)
 	return
@@ -443,9 +439,10 @@
 // apparently called whenever an item is removed from a slot, container, or anything else.
 /obj/item/proc/dropped(mob/user)
 	SHOULD_CALL_PARENT(TRUE)
-	SEND_SIGNAL(src, COMSIG_ITEM_DROPPED,user)
-	if(DROPDEL & flags)
+	SEND_SIGNAL(src, COMSIG_ITEM_DROPPED, user)
+	if(flags & DROPDEL)
 		qdel(src)
+	set_alt_apperances_layers()
 
 // called just as an item is picked up (loc is not yet changed)
 /obj/item/proc/pickup(mob/user)
@@ -471,7 +468,7 @@
 /obj/item/proc/equipped(mob/user, slot)
 	SHOULD_CALL_PARENT(TRUE)
 	SEND_SIGNAL(src, COMSIG_ITEM_EQUIPPED, user, slot)
-	return
+	set_alt_apperances_layers()
 
 //the mob M is attempting to equip this item into the slot passed through as 'slot'. Return 1 if it can do this and 0 if it can't.
 //If you are making custom procs but would like to retain partial or complete functionality of this one, include a 'return ..()' to where you want this to happen.
@@ -874,7 +871,7 @@
 
 	M.log_combat(user, "eyestabbed with [name]")
 
-	src.add_fingerprint(user)
+	add_fingerprint(user)
 	//if((CLUMSY in user.mutations) && prob(50))
 	//	M = user
 		/*
@@ -930,14 +927,15 @@
 		G.transfer_blood = 0
 
 /obj/item/add_dirt_cover()
-	if(!blood_overlay)
-		generate_blood_overlay()
-	..()
-	if(dirt_overlay)
-		if(blood_overlay.color != dirt_overlay.color)
-			cut_overlay(blood_overlay)
-			blood_overlay.color = dirt_overlay.color
-			add_overlay(blood_overlay)
+	. = ..()
+	if(!.)
+		return
+	if(blood_overlay && blood_overlay.color == dirt_overlay.color)
+		return
+	generate_blood_overlay()
+	cut_overlay(blood_overlay)
+	blood_overlay.color = dirt_overlay.color
+	add_overlay(blood_overlay)
 
 /obj/item/add_blood(mob/living/carbon/human/M)
 	if (!..())
@@ -948,21 +946,21 @@
 	blood_DNA[M.dna.unique_enzymes] = M.dna.b_type
 	return 1 //we applied blood to the item
 
-var/global/list/items_blood_overlay_by_type = list()
 /obj/item/proc/generate_blood_overlay()
+	var/static/list/items_blood_overlay_by_type = list()
+
 	if(blood_overlay)
 		return
 
-	var/image/IMG = items_blood_overlay_by_type[type]
-	if(IMG)
-		blood_overlay = IMG
-	else
-		var/icon/ICO = new /icon(icon, icon_state)
-		ICO.Blend(new /icon('icons/effects/blood.dmi', rgb(255, 255, 255)), ICON_ADD) // fills the icon_state with white (except where it's transparent)
-		ICO.Blend(new /icon('icons/effects/blood.dmi', "itemblood"), ICON_MULTIPLY)   // adds blood and the remaining white areas become transparant
-		IMG = image("icon" = ICO)
-		items_blood_overlay_by_type[type] = IMG
-		blood_overlay = IMG
+	if(items_blood_overlay_by_type[type])
+		blood_overlay = items_blood_overlay_by_type[type]
+		return
+
+	var/image/blood = image(icon = 'icons/effects/blood.dmi', icon_state = "itemblood") // Needs to be a new one each time since we're slicing it up with filters.
+	blood.filters += filter(type = "alpha", icon = icon(icon, icon_state)) // Same, this filter is unique for each blood overlay per type
+	items_blood_overlay_by_type[type] = blood
+
+	blood_overlay = blood
 
 /obj/item/proc/showoff(mob/user)
 	user.visible_message("[user] holds up [src]. <a HREF=?_src_=usr;lookitem=\ref[src]>Take a closer look.</a>")
@@ -1007,6 +1005,14 @@ var/global/list/items_blood_overlay_by_type = list()
 
 /obj/item/proc/play_unique_footstep_sound() // TODO: port https://github.com/tgstation/tgstation/blob/master/code/datums/components/squeak.dm
 	return
+
+/obj/item/proc/set_alt_apperances_layers()
+	if(alternate_appearances)
+		for(var/key in alternate_appearances)
+			var/datum/atom_hud/alternate_appearance/basic/AA = alternate_appearances[key]
+			AA.theImage.layer = layer
+			AA.theImage.plane = plane
+			AA.theImage.appearance_flags = appearance_flags
 
 /obj/item/MouseEntered()
 	SHOULD_CALL_PARENT(TRUE)

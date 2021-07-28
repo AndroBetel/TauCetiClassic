@@ -5,12 +5,12 @@
 	icon = 'icons/obj/hydroponics/equipment.dmi'
 	icon_state = "hydrotray"
 	density = TRUE
-	anchored = 1
+	anchored = TRUE
 	interact_offline = TRUE
 
 	var/waterlevel = 100             //The amount of water in the tray (max 100)
 	var/maxwater = 100               //The maximum amount of water in the tray
-	var/nutrilevel = 10              //The amount of nutrient in the tray (max 10)
+	var/nutrilevel = 3              //The amount of nutrient in the tray (max 10)
 	var/maxnutri = 10                //The maximum nutrient of water in the tray
 	var/pestlevel = 0                //The amount of pests in the tray (max 10)
 	var/weedlevel = 0                //The amount of weeds in the tray (max 10)
@@ -52,8 +52,6 @@
 		rating = M.rating
 	maxwater = tmp_capacity * 50 // Up to 300
 	maxnutri = tmp_capacity * 5  // Up to 30
-	waterlevel = maxwater
-	nutrilevel = 3
 
 /obj/machinery/hydroponics/Destroy()
 	if(myseed)
@@ -391,10 +389,10 @@
 	if(istype(O, /obj/item/nutrient))
 		var/obj/item/nutrient/myNut = O
 		user.remove_from_mob(O)
-		nutrilevel = 10
+		nutrilevel = min(nutrilevel + 10, maxnutri)
 		yieldmod = myNut.yieldmod
 		mutmod = myNut.mutmod
-		to_chat(user, "You replace the nutrient solution in [src].")
+		to_chat(user, "You adding the nutrient solution in [src].")
 		playsound(src, 'sound/items/cork_and_liquid.ogg', VOL_EFFECTS_MASTER, 90)
 		qdel(O)
 		update_icon()
@@ -690,11 +688,11 @@
 
 		if(!anchored && !isinspace())
 			playsound(src, 'sound/items/Ratchet.ogg', VOL_EFFECTS_MASTER)
-			anchored = 1
+			anchored = TRUE
 			to_chat(user, "You wrench [src] in place.")
 		else if(anchored)
 			playsound(src, 'sound/items/Ratchet.ogg', VOL_EFFECTS_MASTER)
-			anchored = 0
+			anchored = FALSE
 			to_chat(user, "You unwrench [src].")
 
 		wrenched_change()
@@ -704,12 +702,12 @@
 		if(anchored)
 			if(anchored == 2)
 				playsound(src, 'sound/items/Wirecutter.ogg', VOL_EFFECTS_MASTER)
-				anchored = 1
+				anchored = TRUE
 				to_chat(user, "<span class='notice'>You snip \the [src]'s hoses.</span>")
 
 			else if(anchored == 1)
 				playsound(src, 'sound/items/Wirecutter.ogg', VOL_EFFECTS_MASTER)
-				anchored = 2
+				anchored = TRUE
 				to_chat(user, "<span class='notice'>You reconnect \the [src]'s hoses.</span>")
 
 			wrenched_change()
@@ -755,7 +753,7 @@
 	if(issilicon(user))//AI doesn't know what is planted
 		return TRUE
 	if(harvest)
-		if(!in_range(src, user))
+		if(!Adjacent(user))
 			return TRUE
 		myseed.harvest()
 	else if(dead)

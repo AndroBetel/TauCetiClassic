@@ -3,8 +3,8 @@
 	var/name = null
 	var/id = null
 	var/result = null
-	var/list/required_reagents = new/list()
-	var/list/required_catalysts = new/list()
+	var/list/required_reagents = list()
+	var/list/required_catalysts = list()
 
 	// Both of these variables are mostly going to be used with slime cores - but if you want to, you can use them for other things
 	var/atom/required_container = null // the container required for the reaction to happen
@@ -331,10 +331,17 @@
 	result_amount = 2
 
 /datum/chemical_reaction/imidazoline
-	name = "imidazoline"
+	name = "Imidazoline"
 	id = "imidazoline"
 	result = "imidazoline"
 	required_reagents = list("carbon" = 1, "hydrogen" = 1, "anti_toxin" = 1)
+	result_amount = 2
+
+/datum/chemical_reaction/aurisine
+	name = "Aurisine"
+	id = "aurisine"
+	result = "aurisine"
+	required_reagents = list("sulfur" = 1, "oxygen" = 1, "anti_toxin" = 1)
 	result_amount = 2
 
 /datum/chemical_reaction/dextromethorphan
@@ -956,7 +963,7 @@
 	required_other = 4
 
 /datum/chemical_reaction/slimebork/on_reaction(datum/reagents/holder, created_volume)
-	var/list/borks = typesof(/obj/item/weapon/reagent_containers/food/snacks) - /obj/item/weapon/reagent_containers/food/snacks
+	var/list/borks = subtypesof(/obj/item/weapon/reagent_containers/food/snacks)
 	// BORK BORK BORK
 
 	playsound(holder.my_atom, 'sound/effects/phasein.ogg', VOL_EFFECTS_MASTER)
@@ -1475,7 +1482,7 @@
 	required_other = 1
 
 /datum/chemical_reaction/slimepaint/on_reaction(datum/reagents/holder)
-	var/list/paints = typesof(/obj/item/weapon/reagent_containers/glass/paint) - /obj/item/weapon/reagent_containers/glass/paint
+	var/list/paints = subtypesof(/obj/item/weapon/reagent_containers/glass/paint)
 	var/chosen = pick(paints)
 	var/obj/B = new chosen
 	if(B)
