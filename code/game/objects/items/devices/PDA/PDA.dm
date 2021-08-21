@@ -8,7 +8,7 @@
 	icon = 'icons/obj/pda.dmi'
 	icon_state = "pda"
 	item_state = "electronic"
-	w_class = ITEM_SIZE_SMALL
+	w_class = SIZE_TINY
 	slot_flags = SLOT_FLAGS_ID | SLOT_FLAGS_BELT
 
 	//Main variables
@@ -93,7 +93,9 @@
 	if (can_use(user) && id)
 		remove_id()
 		update_icon()
-	else if (can_use(user))
+
+/obj/item/device/pda/CtrlClick(mob/user)
+	if (can_use(user))
 		verb_remove_pen()
 
 /obj/item/device/pda/medical
@@ -334,14 +336,17 @@
 	if(usr.stat == DEAD)
 		to_chat(usr, "You can't do that because you are dead!")
 		return
-	var/HTML = "<html><head><title>AI PDA Message Log</title></head><body>"
+	var/HTML = ""
 	for(var/index in tnote)
 		if(index["sent"])
 			HTML += addtext("<i><b>&rarr; To <a href='byond://?src=\ref[src];choice=Message;target=",index["src"],"'>", index["owner"],"</a>:</b></i><br>", index["message"], "<br>")
 		else
 			HTML += addtext("<i><b>&larr; From <a href='byond://?src=\ref[src];choice=Message;target=",index["target"],"'>", index["owner"],"</a>:</b></i><br>", index["message"], "<br>")
-	HTML +="</body></html>"
-	usr << browse(entity_ja(HTML), "window=log;size=400x444;border=1;can_resize=1;can_close=1;can_minimize=0")
+
+	var/datum/browser/popup = new(usr, "log", "AI PDA Message Log", 400, 444)
+	popup.set_window_options("border=1;can_minimize=0")
+	popup.set_content(HTML)
+	popup.open()
 
 
 /obj/item/device/pda/silicon/can_use()
@@ -377,15 +382,12 @@
 /obj/item/device/pda/proc/can_use()
 
 	if(!ismob(loc))
-		return 0
+		return FALSE
 
 	var/mob/M = loc
 	if(M.incapacitated())
-		return 0
-	if((src in M.contents) || ( istype(loc, /turf) && in_range(src, M) ))
-		return 1
-	else
-		return 0
+		return FALSE
+	return TRUE
 
 /obj/item/device/pda/GetAccess()
 	if(id)
@@ -397,8 +399,9 @@
 	return id
 
 /obj/item/device/pda/MouseDrop(obj/over_object as obj, src_location, over_location)
+	. = ..()
 	var/mob/M = usr
-	if((!istype(over_object, /obj/screen)) && can_use())
+	if((!istype(over_object, /atom/movable/screen)) && can_use())
 		return attack_self(M)
 	return
 
@@ -532,7 +535,7 @@
 				data["convo_job"] = sanitize(c["job"])
 				break
 	if(mode==41)
-		data_core.get_manifest_json()
+		data_core.load_manifest()
 
 	if(mode==3)
 		var/turf/T = get_turf(user.loc)
@@ -571,7 +574,7 @@
 	if (!ui)
 		// the ui does not exist, so we'll create a new() one
 	        // for a list of parameters and their descriptions see the code docs in \code\modules\nano\nanoui.dm
-		ui = new(user, src, ui_key, "pda.tmpl", title, 520, 400)
+		ui = new(user, src, ui_key, "pda.tmpl", title, 640, 420)
 		// when the ui is first opened this is the data it will use
 
 		ui.load_cached_data(ManifestJSON)
@@ -609,8 +612,8 @@
 	var/datum/nanoui/ui = nanomanager.get_open_ui(user, src, "main")
 	var/mob/living/U = usr
 	//Looking for master was kind of pointless since PDAs don't appear to have one.
-	//if ((src in U.contents) || ( istype(loc, /turf) && in_range(src, U) ) )
-	if(!can_use()) //Why reinvent the wheel? There's a proc that does exactly that.
+	// if(!can_use()) //Why reinvent the wheel? There's a proc that does exactly that. // Actually, not
+	if (!can_use() || !Adjacent(U))
 		U.unset_machine()
 		if(ui)
 			ui.close()
@@ -647,6 +650,7 @@
 		if ("Authenticate")//Checks for ID
 			id_check(U, 1)
 		if("UpdateInfo")
+			owner = id.registered_name
 			ownjob = id.assignment
 			ownrank = id.rank
 			check_rank(id.rank)		//check if we became the head
@@ -729,10 +733,10 @@
 
 //MESSENGER/NOTE FUNCTIONS===================================
 
-		if ("Edit")
+		if("Edit")
 			var/n = sanitize(input(U, "Please enter message", name, input_default(notehtml)) as message, extra = FALSE)
-			if (in_range(src, U) && loc == U && mode == 1)
-				note = html_decode(n)
+			if(Adjacent(U) && mode == 1)
+				note = n
 				notehtml = note
 				note = replacetext(note, "\n", "<br>")
 			else
@@ -759,7 +763,7 @@
 
 		if("Ringtone")
 			var/t = sanitize(input(U, "Please enter new ringtone", name, input_default(ttone)) as text, 20)
-			if (t && in_range(src, U) && loc == U)
+			if (t && Adjacent(U))
 				if(src.hidden_uplink && hidden_uplink.check_trigger(U, lowertext(t), lowertext(lock_code)))
 					to_chat(U, "The PDA softly beeps.")
 					ui.close()
@@ -771,11 +775,15 @@
 		if("Message")
 
 			var/obj/item/device/pda/P = locate(href_list["target"])
-			src.create_message(U, P, !href_list["notap"])
+			create_message(U, P, !href_list["notap"])
 			if(mode == 2)
 				if(href_list["target"] in conversations)            // Need to make sure the message went through, if not welp.
 					active_conversation = href_list["target"]
 					mode = 21
+
+		if("DM")		// Choice for sending messages from Crew Manifest
+			var/obj/item/device/pda/P = dm_find_pda(href_list["reciever"])
+			create_message(U, P, !href_list["notap"])
 
 		if("Select Conversation")
 			var/P = href_list["convo"]
@@ -856,8 +864,8 @@
 						useMS = TRUE
 						break
 
-			var/datum/signal/signal = src.telecomms_process()
-			
+			var/datum/signal/signal = telecomms_process()
+
 			if(signal && signal.data["done"])
 				useTC = TRUE
 			if(!useMS || !useTC)
@@ -918,7 +926,7 @@
 						useMS = MS
 						break
 
-			var/datum/signal/signal = src.telecomms_process()
+			var/datum/signal/signal = telecomms_process()
 
 			var/useTC = 0
 			if(signal)
@@ -1097,6 +1105,24 @@
 			id.loc = get_turf(src)
 		id = null
 
+/obj/item/device/pda/proc/dm_find_pda(owner_name) // Find reciever PDA by name from Crew Manifest
+	var/pda_ref = null
+
+	for (var/obj/item/device/pda/P in PDAs)
+		if (!P.owner)
+			continue
+		else if(P.hidden)
+			continue
+		else if (P == src)
+			continue
+		else if (P.toff)
+			continue
+		else if (P.owner == owner_name)
+			pda_ref = P
+			continue
+
+	return pda_ref
+
 /obj/item/device/pda/proc/create_message(mob/living/U = usr, obj/item/device/pda/P, tap = 1)
 	if(tap && iscarbon(U))
 		U.visible_message("<span class='notice'>[U] taps on \his PDA's screen.</span>")
@@ -1106,7 +1132,7 @@
 
 	if (!t || !istype(P))
 		return
-	if (!in_range(src, U) && loc != U)
+	if (!Adjacent(U))
 		return
 
 	if (isnull(P)||P.toff || toff)
@@ -1129,7 +1155,7 @@
 				useMS = MS
 				break
 
-	var/datum/signal/signal = src.telecomms_process()
+	var/datum/signal/signal = telecomms_process()
 
 	var/useTC = 0
 	if(signal)
@@ -1174,12 +1200,13 @@
 
 		if (!P.message_silent)
 			playsound(P, 'sound/machines/twobeep.ogg', VOL_EFFECTS_MASTER)
-			audible_message("[bicon(P)] *[P.ttone]*", hearing_distance = 3)
+			P.audible_message("[bicon(P)] *[P.ttone]*", hearing_distance = 3)
 
 		//Search for holder of the PDA.
 		var/mob/living/L = null
 		if(P.loc && isliving(P.loc))
 			L = P.loc
+			t = highlight_traitor_codewords(t, L.mind)
 		//Maybe they are a pAI!
 		else
 			L = get(P, /mob/living/silicon)
@@ -1230,6 +1257,11 @@
 	else
 		to_chat(usr, "<span class='notice'>You cannot do this while restrained.</span>")
 
+	if(ishuman(loc))
+		var/mob/living/carbon/human/H = loc
+		if(H.wear_id == src)
+			H.sec_hud_set_ID()
+
 
 /obj/item/device/pda/verb/verb_remove_pen()
 	set category = "Object"
@@ -1263,15 +1295,13 @@
 		else
 			var/obj/item/I = user.get_active_hand()
 			if (istype(I, /obj/item/weapon/card/id))
-				user.drop_item()
-				I.loc = src
+				user.drop_from_inventory(I, src)
 				id = I
 	else
 		var/obj/item/weapon/card/I = user.get_active_hand()
 		if (istype(I, /obj/item/weapon/card/id) && I:registered_name)
 			var/obj/old_id = id
-			user.drop_item()
-			I.loc = src
+			user.drop_from_inventory(I, src)
 			id = I
 			user.put_in_hands(old_id)
 	update_icon()
@@ -1305,11 +1335,15 @@
 			name = "PDA-[owner] ([ownjob])"
 			to_chat(user, "<span class='notice'>Card scanned.</span>")
 		else
-			//Basic safety check. If either both objects are held by user or PDA is on ground and card is in hand.
-			if(((src in user.contents) && (idcard in user.contents)) || (istype(loc, /turf) && in_range(src, user) && (idcard in user.contents)) )
+			//Basic safety check. If card is held by user and PDA is near user or in user's hand.
+			if(idcard.loc == user)
 				id_check(user, 2)
 				to_chat(user, "<span class='notice'>You put the ID into \the [src]'s slot.</span>")
 				updateSelfDialog()//Update self dialog on success.
+				if(ishuman(loc))
+					var/mob/living/carbon/human/human_wearer = loc
+					if(human_wearer.wear_id == src)
+						human_wearer.sec_hud_set_ID()
 			return	//Return in case of failed check or when successful.
 		updateSelfDialog()//For the non-input related code.
 	else if(istype(I, /obj/item/device/paicard) && !src.pai)
@@ -1485,10 +1519,10 @@
 
 /obj/item/device/pda/proc/check_owner_fingerprints(mob/living/carbon/human/user)
 	if(!owner_account)
-		alert("Eror! Account information not saved in this PDA, please insert your ID card in PDA and update the information.")
+		tgui_alert(usr, "Eror! Account information not saved in this PDA, please insert your ID card in PDA and update the information.")
 		return FALSE
 	if(!user.dna)	//just in case
-		alert("Eror! PDA can't read your fingerprints.")
+		tgui_alert(usr, "Eror! PDA can't read your fingerprints.")
 		return FALSE
 	var/fingerprints = md5(user.dna.uni_identity)
 	if(fingerprints in owner_fingerprints)
@@ -1496,11 +1530,11 @@
 	else
 		var/tried_pin =  text2num(input(user, "[owner] please enter your account password", name) as text)
 		if(tried_pin == owner_account.remote_access_pin)
-			owner_fingerprints += fingerprints	//add new owner’s fingerprints to the list
+			owner_fingerprints += fingerprints	//add new owner's fingerprints to the list
 			to_chat(user, "[bicon(src)]<span class='info'>Password is correct</span>")
 			return TRUE
 		else
-			alert("Invalid Password!")
+			tgui_alert(usr, "Invalid Password!")
 			return FALSE
 
 /obj/item/device/pda/proc/transaction_inform(target, source, amount, salary_change = FALSE)

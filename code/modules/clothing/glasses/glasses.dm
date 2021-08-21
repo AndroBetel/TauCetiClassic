@@ -2,7 +2,7 @@
 /obj/item/clothing/glasses
 	name = "glasses"
 	icon = 'icons/obj/clothing/glasses.dmi'
-	//w_class = ITEM_SIZE_SMALL
+	//w_class = SIZE_TINY
 	//flags = GLASSESCOVERSEYES
 	//slot_flags = SLOT_FLAGS_EYES
 	//var/vision_flags = 0
@@ -67,8 +67,6 @@
 	icon_state = "night"
 	item_state = "glasses"
 	origin_tech = "magnets=2"
-//	darkness_view = 3
-//	vision_flags = SEE_SELF
 	darkness_view = 7
 	toggleable = 1
 	sightglassesmod = "nvg"
@@ -233,17 +231,13 @@
 	icon_state = "bigsunglasses"
 	item_state = "bigsunglasses"
 
-/obj/item/clothing/glasses/sunglasses/sechud
+/obj/item/clothing/glasses/sunglasses/hud/sechud
 	name = "HUDsunglasses"
 	desc = "Sunglasses with a HUD."
 	icon_state = "sunhud"
-	var/obj/item/clothing/glasses/hud/security/hud = null
+	hud_types = list(DATA_HUD_SECURITY)
 
-/obj/item/clothing/glasses/sunglasses/sechud/atom_init()
-	. = ..()
-	hud = new/obj/item/clothing/glasses/hud/security(src)
-
-/obj/item/clothing/glasses/sunglasses/sechud/tactical
+/obj/item/clothing/glasses/sunglasses/hud/sechud/tactical
 	name = "tactical HUD"
 	desc = "Flash-resistant goggles with inbuilt combat and security information."
 	icon_state = "swatgoggles"
@@ -343,7 +337,7 @@
 	toggleable = 0
 	action_button_name = null
 
-/obj/item/clothing/glasses/sunglasses/sechud/gar
+/obj/item/clothing/glasses/sunglasses/hud/sechud/gar
 	name = "gar HUDsunglasses"
 	icon_state = "gars"
 	item_state = "gars"
@@ -353,7 +347,7 @@
 	icon_state = "supergarb"
 	item_state = "supergarb"
 
-/obj/item/clothing/glasses/sunglasses/sechud/gar/super
+/obj/item/clothing/glasses/sunglasses/hud/sechud/gar/super
 	name = "supergar HUDSunglasses"
 	icon_state = "supergars"
 	item_state = "supergars"

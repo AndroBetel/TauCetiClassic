@@ -2,6 +2,7 @@
 	icon = 'icons/obj/structures.dmi'
 	var/climbable
 	var/list/climbers = list()
+	w_class = SIZE_MASSIVE
 
 /obj/structure/atom_init()
 	. = ..()
@@ -20,6 +21,17 @@
 	if(prob(50))
 		qdel(src)
 
+/obj/structure/airlock_crush_act()
+	if(anchored)
+		return
+	if(!density)
+		return
+	var/turf/src_turf = get_turf(src)
+	for(var/dir in cardinal)
+		var/turf/new_turf = get_step(src_turf, dir)
+		if(Move(new_turf))
+			break
+
 /obj/structure/ex_act(severity)
 	switch(severity)
 		if(1.0)
@@ -37,9 +49,6 @@
 				return
 		if(3.0)
 			return
-
-/obj/structure/meteorhit(obj/O)
-	qdel(src)
 
 /obj/structure/proc/climb_on()
 
@@ -68,6 +77,10 @@
 		return FALSE
 
 	if(climber.loc == loc)
+		return FALSE
+
+	if(user.incapacitated())
+		to_chat(user, "<span class='danger'>You can't pull [climber] up onto [src] while being incapacitated.</span>")
 		return FALSE
 
 	if(user != climber)

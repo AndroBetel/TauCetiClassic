@@ -1,15 +1,19 @@
 /mob/living/pbag
 	name = "punching bag"
 	desc = "It's made by some goons."
+	faction = "untouchable"
 
-	icon = 'code/modules/sports/pbag.dmi'
+	icon = 'icons/obj/sports/pbag.dmi'
 	icon_state = "pbag"
 	logs_combat = FALSE
 
 	can_be_pulled = FALSE
 	density = FALSE
+	w_class = SIZE_HUMAN
 
 	maxHealth = 100
+
+	hud_possible = null
 
 	var/list/ghosts_were_here = list()
 	// Used so after a swing we fall correctly in async calls.
@@ -65,14 +69,14 @@
 	return TRUE
 
 /mob/living/pbag/Move(NewLoc, Dir = 0, step_x = 0, step_y = 0)
-	if(ckey && !incapacitated())
+	if(ckey && !incapacitated() && !moving_diagonally)
 		INVOKE_ASYNC(src, /mob/living/pbag.proc/swing)
 		return
 	return ..()
 
 /mob/living/pbag/say(message, datum/language/speaking = null, verb="says", alt_name="", italics=FALSE, message_range = world.view, list/used_radios = list(), sound/speech_sound, sound_vol, sanitize = TRUE, message_mode = FALSE)
 	if(ckey)
-		. = ..(capitalize(message), verb = "whispers", message_range = 1)
+		. = ..(capitalize(message), verb = "whispers", message_range = 1) // why not all args?
 
 /mob/living/pbag/emote(act, type, message, auto)
 	if(ckey)
@@ -221,3 +225,12 @@
 
 /mob/living/pbag/is_usable_leg(targetzone = null)
 	return TRUE
+
+/mob/living/pbag/prepare_huds()
+	return
+
+/mob/living/pbag/med_hud_set_health()
+	return
+
+/mob/living/pbag/med_hud_set_status()
+	return

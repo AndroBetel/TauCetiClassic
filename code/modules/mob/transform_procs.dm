@@ -31,7 +31,6 @@
 			if(IMP.part)
 				IMP.part.implants -= src
 				IMP.part = null
-		hud_updateflag |= 1 << IMPLOYAL_HUD
 
 	if(tr_flags & TR_KEEPITEMS)
 		var/Itemlist = get_equipped_items()
@@ -109,6 +108,7 @@
 			IMP.loc = O
 			IMP.imp_in = O
 			IMP.implanted = TRUE
+		O.sec_hud_set_implants()
 
 	//transfer stuns
 	if(tr_flags & TR_KEEPSTUNS)
@@ -125,9 +125,10 @@
 	if(mind)
 		mind.transfer_to(O)
 
-		if(O.mind.changeling)
-			O.mind.changeling.purchasedpowers += new /obj/effect/proc_holder/changeling/humanform(null)
-			O.changeling_update_languages(O.mind.changeling.absorbed_languages)
+		var/datum/role/changeling/C = O.mind.GetRoleByType(/datum/role/changeling)
+		if(C)
+			C.purchasedpowers += new /obj/effect/proc_holder/changeling/humanform(null)
+			O.changeling_update_languages(C.absorbed_languages)
 			for(var/mob/living/parasite/essence/M in src)
 				M.transfer(O)
 
@@ -166,7 +167,6 @@
 			if(IMP.part)
 				IMP.part.implants -= src
 				IMP.part = null
-		hud_updateflag |= 1 << IMPLOYAL_HUD
 
 	if(tr_flags & TR_KEEPITEMS)
 		for(var/obj/item/W in get_equipped_items())
@@ -207,7 +207,7 @@
 	else
 		O.dna = dna.Clone(transfer_SE = FALSE)
 
-	if(ismonkey(src) && cmptext(initial(name), copytext(O.dna.real_name, 1, length(initial(name)) + 1))) // simple "monkey" name check is not enough with species.
+	if(ismonkey(src) && cmptext(initial(name), copytext(O.dna.real_name, 1, length_char(initial(name)) + 1))) // simple "monkey" name check is not enough with species.
 		O.real_name = random_unique_name(O.gender)
 		O.dna.generate_unique_enzymes(O)
 	else
@@ -225,6 +225,7 @@
 		viruses = list()
 		for(var/datum/disease/D in O.viruses)
 			D.affected_mob = O
+		O.med_hud_set_status()
 
 	//keep damage?
 	if (tr_flags & TR_KEEPDAMAGE)
@@ -249,6 +250,7 @@
 			if(BP)
 				IMP.part = BP
 				BP.implants += IMP
+		O.sec_hud_set_implants()
 
 	//transfer stuns
 	if(tr_flags & TR_KEEPSTUNS)
@@ -265,8 +267,9 @@
 	if(mind)
 		mind.transfer_to(O)
 
-		if(O.mind.changeling)
-			O.changeling_update_languages(O.mind.changeling.absorbed_languages)
+		var/datum/role/changeling/C = mind.GetRoleByType(/datum/role/changeling)
+		if(C)
+			O.changeling_update_languages(C.absorbed_languages)
 			for(var/mob/living/parasite/essence/M in src)
 				M.transfer(O)
 
@@ -355,7 +358,7 @@
 	return O
 
 //human -> robot
-/mob/living/carbon/human/proc/Robotize(name = "Default", laws = /datum/ai_laws/nanotrasen, ai_link = TRUE)
+/mob/living/carbon/human/proc/Robotize(name = "Default", laws = /datum/ai_laws/nanotrasen, ai_link = TRUE, datum/religion/R)
 	if (notransform)
 		return
 	for(var/obj/item/W in src)
@@ -368,7 +371,7 @@
 	for(var/t in bodyparts)
 		qdel(t)
 
-	var/mob/living/silicon/robot/O = new /mob/living/silicon/robot(loc, name, laws, ai_link)
+	var/mob/living/silicon/robot/O = new /mob/living/silicon/robot(loc, name, laws, ai_link, R)
 
 	// cyborgs produced by Robotize get an automatic power cell
 	O.cell = new(O)
@@ -399,10 +402,6 @@
 			O.mmi = new /obj/item/device/mmi(O)
 
 		if(O.mmi) O.mmi.transfer_identity(src) //Does not transfer key/client.
-
-	var/datum/game_mode/mutiny/mode = get_mutiny_mode()
-	if(mode)
-		mode.borgify_directive(O)
 
 	O.Namepick()
 
@@ -502,7 +501,7 @@
 /mob/living/carbon/human/Animalize()
 
 	var/list/mobtypes = typesof(/mob/living/simple_animal)
-	var/mobpath = input("Which type of mob should [src] turn into?", "Choose a type") in mobtypes
+	var/mobpath = tgui_input_list(usr, "Which type of mob should [src] turn into?", "Choose a type", mobtypes)
 
 	if(!safe_animal(mobpath))
 		to_chat(usr, "<span class='warning'>Sorry but this mob type is currently unavailable.</span>")
@@ -601,4 +600,15 @@
 	//Not in here? Must be untested!
 	return 1
 
-
+/mob/living/carbon/human/proc/Blobize()
+	if (notransform)
+		return
+	var/obj/effect/blob/core/new_blob = new /obj/effect/blob/core (loc)
+	if(!client)
+		for(var/mob/dead/observer/G in player_list)
+			if(ckey == "@[G.ckey]")
+				new_blob.create_overmind(G.client , 1)
+				break
+	else
+		new_blob.create_overmind(src.client , 1)
+	gib(src)

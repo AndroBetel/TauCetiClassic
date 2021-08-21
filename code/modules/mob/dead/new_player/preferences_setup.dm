@@ -6,11 +6,8 @@
 		else
 			gender = FEMALE
 	s_tone = random_skin_tone()
-	if(species == IPC)
-		h_style = random_ipc_monitor(ipc_head)
-	else
-		h_style = random_hair_style(gender, species)
-		grad_style = random_gradient_style()
+	h_style = random_hair_style(gender, species, ipc_head)
+	grad_style = random_gradient_style()
 	f_style = random_facial_hair_style(gender, species)
 	randomize_hair_color("hair")
 	randomize_hair_color("facial")
@@ -212,7 +209,7 @@
 			return
 
 	// Set up the dummy for its photoshoot
-	var/mob/living/carbon/human/dummy/mannequin = new(null, species)
+	var/mob/living/carbon/human/dummy/mannequin = generate_or_wait_for_human_dummy(DUMMY_HUMAN_SLOT_PREFERENCES, species)
 	copy_to(mannequin)
 
 	var/datum/species/S = all_species[species]
@@ -220,10 +217,10 @@
 		S.before_job_equip(mannequin, previewJob, TRUE)
 	if(previewJob)
 		mannequin.job = previewJob.title
-		previewJob.equip(mannequin, TRUE)
+		previewJob.equip(mannequin, TRUE, GetPlayerAltTitle(previewJob))
 	if(S)
 		S.after_job_equip(mannequin, previewJob, TRUE)
 
 	COMPILE_OVERLAYS(mannequin)
 	parent.show_character_previews(new /mutable_appearance(mannequin))
-	qdel(mannequin)
+	unset_busy_human_dummy(DUMMY_HUMAN_SLOT_PREFERENCES)

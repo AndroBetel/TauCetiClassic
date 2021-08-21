@@ -2,16 +2,6 @@
 // Helpers for DNA2
 /////////////////////////////
 
-// Pads 0s to t until length == u
-/proc/add_zero2(t, u)
-	var/temp1
-	while (length(t) < u)
-		t = "0[t]"
-	temp1 = t
-	if (length(t) > u)
-		temp1 = copytext(t,2,u+1)
-	return temp1
-
 // DNA Gene activation boundaries, see dna2.dm.
 // Returns a list object with 4 numbers.
 /proc/GetDNABounds(block)
@@ -142,7 +132,7 @@
 	if(istype(src, /mob/living/carbon/human))
 		if(UI!=null)
 			src.dna.UI=UI
-			src.dna.UpdateUI()
+			dna.UpdateUI()
 		dna.check_integrity()
 		var/mob/living/carbon/human/H = src
 		H.r_hair   = dna.GetUIValueRange(DNA_UI_HAIR_R,    255)

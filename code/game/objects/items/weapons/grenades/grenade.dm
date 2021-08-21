@@ -1,7 +1,7 @@
 /obj/item/weapon/grenade
 	name = "grenade"
 	desc = "A hand held grenade, with an adjustable timer."
-	w_class = ITEM_SIZE_SMALL
+	w_class = SIZE_TINY
 	icon = 'icons/obj/grenade.dmi'
 	icon_state = "grenade"
 	item_state = "flashbang"
@@ -66,8 +66,6 @@
 	if(isscrewdriver(I))
 		switch(det_time)
 			if(1)
-				det_time = 1 SECOND
-			if(1 SECONDS)
 				det_time = 3 SECONDS
 			if(3 SECONDS)
 				det_time = 5 SECONDS

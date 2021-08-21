@@ -24,7 +24,7 @@
 
 		H.visible_message("<span class='warning'><B>[attacker] has punched [H]!</B></span>")
 
-		var/obj/item/organ/external/BP = H.get_bodypart(ran_zone(attacker.zone_sel.selecting))
+		var/obj/item/organ/external/BP = H.get_bodypart(ran_zone(attacker.get_targetzone()))
 		var/armor_block = H.run_armor_check(BP, "melee")
 
 		H.apply_damage(damage, HALLOSS, BP, armor_block)
@@ -41,13 +41,6 @@
 /obj/item/clothing/gloves/boxing/yellow
 	icon_state = "boxingyellow"
 	item_state = "boxingyellow"
-
-/obj/item/clothing/gloves/white
-	name = "white gloves"
-	desc = "These look pretty fancy."
-	icon_state = "latex"
-	item_state = "lgloves"
-	item_color="mime"
 
 /obj/item/clothing/gloves/white/redcoat
 	item_color = "redcoat"		//Exists for washing machines. Is not different from white gloves in any way.

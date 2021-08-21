@@ -7,7 +7,7 @@
 	throwforce = 5
 	throw_speed = 1
 	throw_range = 5
-	w_class = ITEM_SIZE_SMALL
+	w_class = SIZE_TINY
 	origin_tech = "syndicate=4;magnets=4"
 	var/can_use = TRUE
 	var/toggled = FALSE
@@ -46,9 +46,11 @@
 	qdel(O)
 
 /obj/item/device/chameleon/dropped()
+	..()
 	disrupt()
 
 /obj/item/device/chameleon/equipped()
+	..()
 	disrupt()
 
 /obj/item/device/chameleon/attack_self(mob/living/user)
@@ -79,7 +81,7 @@
 	C.name = O.name
 	C.desc = O.desc
 	C.appearance = O.appearance
-	C.dir = O.dir
+	C.set_dir(O.dir)
 	C.current_type = O.type
 	C.layer = initial(O.layer) // scanning things in your inventory
 	C.plane = initial(O.plane)

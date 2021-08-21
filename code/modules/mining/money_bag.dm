@@ -7,7 +7,7 @@
 	flags = CONDUCT
 	force = 10.0
 	throwforce = 2.0
-	w_class = ITEM_SIZE_LARGE
+	w_class = SIZE_NORMAL
 
 /obj/item/weapon/moneybag/attack_hand(user)
 	var/amt_gold = 0
@@ -40,7 +40,7 @@
 		if (istype(C,/obj/item/weapon/coin/mythril))
 			amt_hydrogen++;
 
-	var/dat = text("<b>The contents of the moneybag reveal...</b><br>")
+	var/dat = ""
 	if (amt_gold)
 		dat += text("Gold coins: [amt_gold] <A href='?src=\ref[src];remove=gold'>Remove one</A><br>")
 	if (amt_silver)
@@ -59,7 +59,10 @@
 		dat += text("Platinum coins: [amt_platinum] <A href='?src=\ref[src];remove=platinum'>Remove one</A><br>")
 	if (amt_hydrogen)
 		dat += text("Mythril coins: [amt_hydrogen] <A href='?src=\ref[src];remove=hydrogen'>Remove one</A><br>")
-	user << browse("[entity_ja(dat)]", "window=moneybag")
+
+	var/datum/browser/popup = new(user, "moneybag", "The contents of the moneybag reveal...")
+	popup.set_content(dat)
+	popup.open()
 
 /obj/item/weapon/moneybag/attackby(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/weapon/coin))
@@ -80,7 +83,7 @@
 	if(..())
 		return
 	usr.set_machine(src)
-	src.add_fingerprint(usr)
+	add_fingerprint(usr)
 	if(href_list["remove"])
 		var/obj/item/weapon/coin/COIN
 		switch(href_list["remove"])

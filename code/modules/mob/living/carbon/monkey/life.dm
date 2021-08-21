@@ -15,7 +15,7 @@
 	if (stat != DEAD && !IS_IN_STASIS(src))
 		if(!istype(src,/mob/living/carbon/monkey/diona))
 			//First, resolve location and get a breath
-			if(SSmob.times_fired%4==2)
+			if(SSmobs.times_fired%4==2)
 				//Only try to take a breath every 4 seconds, unless suffocating
 				breathe()
 			else //Still give containing object the chance to interact
@@ -23,9 +23,6 @@
 					var/obj/location_as_object = loc
 					location_as_object.handle_internal_lifeform(src, 0)
 
-
-		//Updates the number of stored chemicals for powers
-		handle_changeling()
 		//Mutations and radiation
 		handle_mutations_and_radiation()
 
@@ -52,12 +49,8 @@
 	handle_fire()
 
 	//Status updates, death etc.
-	handle_combat() // Even in death we still fight.
 	handle_regular_status_updates()
 	update_canmove()
-
-	if(client)
-		handle_regular_hud_updates()
 
 	if(!client && stat == CONSCIOUS)
 
@@ -348,9 +341,9 @@
 
 	if(Toxins_pp > safe_phoron_max) // Too much phoron
 		var/ratio = (breath.gas["phoron"] / safe_phoron_max) * 10
-		//adjustToxLoss(CLAMP(ratio, MIN_PLASMA_DAMAGE, MAX_PLASMA_DAMAGE))	//Limit amount of damage toxin exposure can do per second
+		//adjustToxLoss(clamp(ratio, MIN_PLASMA_DAMAGE, MAX_PLASMA_DAMAGE))	//Limit amount of damage toxin exposure can do per second
 		if(reagents)
-			reagents.add_reagent("toxin", CLAMP(ratio, MIN_TOXIN_DAMAGE, MAX_TOXIN_DAMAGE))
+			reagents.add_reagent("toxin", clamp(ratio, MIN_TOXIN_DAMAGE, MAX_TOXIN_DAMAGE))
 		phoron_alert = max(phoron_alert, 1)
 	else
 		phoron_alert = 0
@@ -413,19 +406,19 @@
 	switch(adjusted_pressure)
 		if(hazard_high_pressure to INFINITY)
 			adjustBruteLoss( min( ( (adjusted_pressure / hazard_high_pressure) -1 )*PRESSURE_DAMAGE_COEFFICIENT , MAX_HIGH_PRESSURE_DAMAGE) )
-			throw_alert("pressure", /obj/screen/alert/highpressure, 2)
+			throw_alert("pressure", /atom/movable/screen/alert/highpressure, 2)
 		if(warning_high_pressure to hazard_high_pressure)
-			throw_alert("pressure", /obj/screen/alert/highpressure, 1)
+			throw_alert("pressure", /atom/movable/screen/alert/highpressure, 1)
 		if(warning_low_pressure to warning_high_pressure)
 			clear_alert("pressure")
 		if(hazard_low_pressure to warning_low_pressure)
-			throw_alert("pressure", /obj/screen/alert/lowpressure, 1)
+			throw_alert("pressure", /atom/movable/screen/alert/lowpressure, 1)
 		else
 			if( !(COLD_RESISTANCE in mutations) )
 				adjustBruteLoss( LOW_PRESSURE_DAMAGE )
-				throw_alert("pressure", /obj/screen/alert/lowpressure, 2)
+				throw_alert("pressure", /atom/movable/screen/alert/lowpressure, 2)
 			else
-				throw_alert("pressure", /obj/screen/alert/lowpressure, 1)
+				throw_alert("pressure", /atom/movable/screen/alert/lowpressure, 1)
 
 	return
 
@@ -537,7 +530,7 @@
 			silent = max(silent-1, 0)
 
 		if(druggy)
-			druggy = max(druggy-1, 0)
+			adjustDrugginess(-1)
 	return 1
 
 
@@ -557,7 +550,7 @@
 			sight |= SEE_MOBS
 			sight &= ~SEE_OBJS
 			see_in_dark = 8
-			see_invisible = SEE_INVISIBLE_MINIMUM
+			lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE
 		else
 			sight &= ~SEE_TURFS
 			sight &= ~SEE_MOBS
@@ -597,14 +590,6 @@
 		spawn(0)
 			emote("scratch")
 			return
-
-
-/mob/living/carbon/monkey/proc/handle_changeling()
-	if(mind && mind.changeling)
-		mind.changeling.regenerate()
-		hud_used.lingchemdisplay.invisibility = 0
-		hud_used.lingchemdisplay.maptext = "<div align='center' valign='middle' style='position:relative; top:0px; left:6px'> <font color='#dd66dd'>[src.mind.changeling.chem_charges]</font></div>"
-	return
 
 ///FIRE CODE
 /mob/living/carbon/monkey/handle_fire()

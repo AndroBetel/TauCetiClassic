@@ -1,4 +1,3 @@
-//This file was auto-corrected by findeclaration.exe on 25.5.2012 20:42:31
 #define SKILLS_MODE_MAIN_SCREEN 1
 #define SKILLS_MODE_MAINTENACE_SCREEN 2
 #define SKILLS_MODE_EDIT_SCREEN 3
@@ -12,7 +11,7 @@
 	state_nopower_preset = "laptop0"
 	light_color = "#00b000"
 	req_one_access = list(access_heads)
-	circuit = "/obj/item/weapon/circuitboard/skills"
+	circuit = /obj/item/weapon/circuitboard/skills
 	allowed_checks = ALLOWED_CHECK_NONE
 
 	var/obj/item/weapon/card/id/scan = null  //current id card inside machine
@@ -29,8 +28,7 @@
 
 /obj/machinery/computer/skills/attackby(obj/item/O, user)
 	if(istype(O, /obj/item/weapon/card/id) && !scan)
-		usr.drop_item()
-		O.loc = src
+		usr.drop_from_inventory(O, src)
 		scan = O
 		to_chat(user, "You insert [O].")
 	..()
@@ -73,7 +71,7 @@
 							</tr>"}
 						dat += "</table><hr width='75%' />"
 					dat += text("<A href='?src=\ref[];choice=Record Maintenance'>Record Maintenance</A><br><br>", src)
-					dat += text("<A href='?src=\ref[];choice=Log Out'>{Log Out}</A>",src)
+					dat += text("<A href='?src=\ref[];choice=Log Out'>Log Out</A>",src)
 				if(SKILLS_MODE_MAINTENACE_SCREEN)
 					dat += {"<b>Records Maintenance</b>
 					<hr><br>
@@ -142,9 +140,12 @@
 						dat += text("<br><A href='?src=\ref[];choice=Return'>Return to index</A>", src)
 				else
 		else
-			dat += text("<A href='?src=\ref[];choice=Log In'>{Log In}</A>", src)
-	user << browse(text("<HEAD><TITLE>Employment Records</TITLE></HEAD><TT>[]</TT>", entity_ja(dat)), "window=secure_rec;size=600x400")
-	onclose(user, "secure_rec")
+			dat += text("<A href='?src=\ref[];choice=Log In'>Log In</A>", src)
+
+	var/datum/browser/popup = new(user, "secure_rec", "Employment Records", 600, 400)
+	popup.set_content("<TT>[dat]</TT>")
+	popup.open()
+
 
 /*Revised /N
 I can't be bothered to look more of the actual code outside of switch but that probably needs revising too.
@@ -188,9 +189,11 @@ What a mess.*/
 			else
 				var/obj/item/I = usr.get_active_hand()
 				if (istype(I, /obj/item/weapon/card/id))
-					usr.drop_item()
-					I.loc = src
+					usr.drop_from_inventory(I, src)
 					scan = I
+					if(ishuman(usr))
+						var/mob/living/carbon/human/H = usr
+						H.sec_hud_set_ID()
 
 		if("Log Out")
 			authenticated = null
@@ -222,11 +225,11 @@ What a mess.*/
 					screen = SKILLS_MODE_MAIN_SCREEN
 		// RECORD FUNCTIONS
 		if("Search Records")
-			var/t1 = sanitize_safe(input("Search String: (Partial Name or ID or Fingerprints or Rank)", "Secure. records", null, null)  as text)
-			if ((!( t1 ) || !( authenticated ) || usr.incapacitated() || (!in_range(src, usr) && !issilicon(usr) && !isobserver(usr))))
+			var/t1 = sanitize_safe(input("Search String: (Partial Name or ID or Fingerprints or Rank)", "Secure. records", null, null)  as text, ascii_only = TRUE)
+			if ((!( t1 ) || !( authenticated ) || usr.incapacitated() || (!Adjacent(usr) && !issilicon(usr) && !isobserver(usr))))
 				return FALSE
-			Perp = new/list()
-			t1 = lowertext_(t1)
+			Perp = list()
+			t1 = lowertext(t1)
 			var/list/components = splittext(t1, " ")
 			if(components.len > 5)
 				return //Lets not let them search too greedily.
@@ -234,7 +237,7 @@ What a mess.*/
 				var/temptext = R.fields["name"] + " " + R.fields["id"] + " " + R.fields["fingerprint"] + " " + R.fields["rank"]
 				for(var/i = 1, i<=components.len, i++)
 					if(findtext(temptext,components[i]))
-						var/prelist = new/list(2)
+						var/list/prelist[2]
 						prelist[1] = R
 						Perp += prelist
 			for(var/i = 1, i<=Perp.len, i+=2)
@@ -315,19 +318,19 @@ What a mess.*/
 				if("name")
 					if (istype(active1, /datum/data/record))
 						var/t1 = sanitize(input("Please input name:", "Secure. records", input_default(active1.fields["name"]), null)  as text, MAX_NAME_LEN)
-						if ((!( t1 ) || !( authenticated ) || usr.incapacitated() || (!in_range(src, usr) && !issilicon(usr) && !isobserver(usr))) || active1 != a1)
+						if ((!( t1 ) || !( authenticated ) || usr.incapacitated() || (!Adjacent(usr) && !issilicon(usr) && !isobserver(usr))) || active1 != a1)
 							return FALSE
 						active1.fields["name"] = t1
 				if("id")
 					if (istype(active1, /datum/data/record))
 						var/t1 = sanitize(input("Please input id:", "Secure. records", input_default(active1.fields["id"]), null)  as text)
-						if ((!( t1 ) || !( authenticated ) || usr.incapacitated() || (!in_range(src, usr) && !issilicon(usr) && !isobserver(usr)) || active1 != a1))
+						if ((!( t1 ) || !( authenticated ) || usr.incapacitated() || (!Adjacent(usr) && !issilicon(usr) && !isobserver(usr)) || active1 != a1))
 							return FALSE
 						active1.fields["id"] = t1
 				if("fingerprint")
 					if (istype(active1, /datum/data/record))
 						var/t1 = sanitize(input("Please input fingerprint hash:", "Secure. records", input_default(active1.fields["fingerprint"]), null)  as text)
-						if ((!( t1 ) || !( authenticated ) || usr.incapacitated() || (!in_range(src, usr) && !issilicon(usr) && !isobserver(usr)) || active1 != a1))
+						if ((!( t1 ) || !( authenticated ) || usr.incapacitated() || (!Adjacent(usr) && !issilicon(usr) && !isobserver(usr)) || active1 != a1))
 							return FALSE
 						active1.fields["fingerprint"] = t1
 				if("sex")
@@ -339,7 +342,7 @@ What a mess.*/
 				if("age")
 					if (istype(active1, /datum/data/record))
 						var/t1 = input("Please input age:", "Secure. records", active1.fields["age"], null)  as num
-						if ((!( t1 ) || !( authenticated ) || usr.incapacitated() || (!in_range(src, usr) && !issilicon(usr) && !isobserver(usr)) || active1 != a1))
+						if ((!( t1 ) || !( authenticated ) || usr.incapacitated() || (!Adjacent(usr) && !issilicon(usr) && !isobserver(usr)) || active1 != a1))
 							return FALSE
 						active1.fields["age"] = t1
 				if("rank")
@@ -352,11 +355,11 @@ What a mess.*/
 							temp += "<li><a href='?src=\ref[src];choice=Change Rank;rank=[rank]'>[rank]</a></li>"
 						temp += "</ul>"
 					else
-						alert(usr, "You do not have the required rank to do this!")
+						tgui_alert(usr, "You do not have the required rank to do this!")
 				if("species")
 					if (istype(active1, /datum/data/record))
 						var/t1 = sanitize(input("Please enter race:", "General records", input_default(active1.fields["species"]), null) as message)
-						if ((!( t1 ) || !( authenticated ) || usr.incapacitated() || (!in_range(src, usr) && !issilicon(usr) && !isobserver(usr)) || active1 != a1))
+						if ((!( t1 ) || !( authenticated ) || usr.incapacitated() || (!Adjacent(usr) && !issilicon(usr) && !isobserver(usr)) || active1 != a1))
 							return FALSE
 						active1.fields["species"] = t1
 

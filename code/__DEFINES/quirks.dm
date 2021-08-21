@@ -11,6 +11,7 @@
 #define QUIRK_HIGH_PAIN_THRESHOLD "High pain threshold"
 #define QUIRK_LOW_PAIN_THRESHOLD "Low pain threshold"
 #define QUIRK_AGEUSIA "Ageusia"
+#define QUIRK_DALTONISM "Daltonism"
 
 // negative quirks.
 #define QUIRK_BLIND "Blind"
@@ -25,3 +26,4 @@
 #define QUIRK_MUTE "Mute"
 #define QUIRK_LIGHT_DRINKER "Light Drinker"
 #define QUIRK_NYCTOPHOBIA "Nyctophobia"
+#define QUIRK_GENETIC_DEGRADATION "Genetic Degradation"

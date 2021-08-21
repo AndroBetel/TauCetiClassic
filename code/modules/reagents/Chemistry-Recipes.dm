@@ -3,8 +3,8 @@
 	var/name = null
 	var/id = null
 	var/result = null
-	var/list/required_reagents = new/list()
-	var/list/required_catalysts = new/list()
+	var/list/required_reagents = list()
+	var/list/required_catalysts = list()
 
 	// Both of these variables are mostly going to be used with slime cores - but if you want to, you can use them for other things
 	var/atom/required_container = null // the container required for the reaction to happen
@@ -331,10 +331,17 @@
 	result_amount = 2
 
 /datum/chemical_reaction/imidazoline
-	name = "imidazoline"
+	name = "Imidazoline"
 	id = "imidazoline"
 	result = "imidazoline"
 	required_reagents = list("carbon" = 1, "hydrogen" = 1, "anti_toxin" = 1)
+	result_amount = 2
+
+/datum/chemical_reaction/aurisine
+	name = "Aurisine"
+	id = "aurisine"
+	result = "aurisine"
+	required_reagents = list("sulfur" = 1, "oxygen" = 1, "anti_toxin" = 1)
 	result_amount = 2
 
 /datum/chemical_reaction/dextromethorphan
@@ -900,7 +907,7 @@
 						blueeffect.icon = 'icons/effects/effects.dmi'
 						blueeffect.icon_state = "shieldsparkles"
 						blueeffect.layer = 17
-						blueeffect.mouse_opacity = 0
+						blueeffect.mouse_opacity = MOUSE_OPACITY_TRANSPARENT
 						M.client.screen += blueeffect
 						sleep(20)
 						M.client.screen -= blueeffect
@@ -956,7 +963,7 @@
 	required_other = 4
 
 /datum/chemical_reaction/slimebork/on_reaction(datum/reagents/holder, created_volume)
-	var/list/borks = typesof(/obj/item/weapon/reagent_containers/food/snacks) - /obj/item/weapon/reagent_containers/food/snacks
+	var/list/borks = subtypesof(/obj/item/weapon/reagent_containers/food/snacks)
 	// BORK BORK BORK
 
 	playsound(holder.my_atom, 'sound/effects/phasein.ogg', VOL_EFFECTS_MASTER)
@@ -1185,7 +1192,9 @@
 
 /datum/chemical_reaction/slimefreeze/on_reaction(datum/reagents/holder)
 	holder.my_atom.visible_message("<span class='warning'>The slime extract begins to vibrate violently !</span>")
-	sleep(50)
+	addtimer(CALLBACK(src, .proc/do_freeze, holder), 50)
+
+/datum/chemical_reaction/slimefreeze/proc/do_freeze(datum/reagents/holder)
 	playsound(holder.my_atom, 'sound/effects/phasein.ogg', VOL_EFFECTS_MASTER)
 	for(var/mob/living/M in range(get_turf_loc(holder.my_atom), 7))
 		M.bodytemperature -= 140
@@ -1212,7 +1221,9 @@
 
 /datum/chemical_reaction/slimefire/on_reaction(datum/reagents/holder)
 	holder.my_atom.visible_message("<span class='warning'>The slime extract begins to vibrate violently !</span>")
-	sleep(50)
+	addtimer(CALLBACK(src, .proc/do_fire, holder), 50)
+
+/datum/chemical_reaction/slimefire/proc/do_fire(datum/reagents/holder)
 	if(!(holder.my_atom && holder.my_atom.loc))
 		return
 
@@ -1369,7 +1380,9 @@
 
 /datum/chemical_reaction/slimeexplosion/on_reaction(datum/reagents/holder)
 	holder.my_atom.visible_message("<span class='warning'>The slime extract begins to vibrate violently !</span>")
-	sleep(50)
+	addtimer(CALLBACK(src, .proc/do_explosion, holder), 50)
+
+/datum/chemical_reaction/slimeexplosion/proc/do_explosion(datum/reagents/holder)
 	explosion(get_turf_loc(holder.my_atom), 1 ,3, 6)
 	message_admins("Oil slime extract activated by [key_name_admin(usr)](<A HREF='?_src_=holder;adminmoreinfo=\ref[usr]'>?</A>) [ADMIN_JMP(usr)]")
 	log_game("Oil slime extract activated by [key_name(usr)]")
@@ -1469,7 +1482,7 @@
 	required_other = 1
 
 /datum/chemical_reaction/slimepaint/on_reaction(datum/reagents/holder)
-	var/list/paints = typesof(/obj/item/weapon/reagent_containers/glass/paint) - /obj/item/weapon/reagent_containers/glass/paint
+	var/list/paints = subtypesof(/obj/item/weapon/reagent_containers/glass/paint)
 	var/chosen = pick(paints)
 	var/obj/B = new chosen
 	if(B)

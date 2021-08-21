@@ -4,6 +4,7 @@
 	name = QUIRK_BLIND
 	desc = "You are completely blind, nothing can counteract this."
 	value = -4
+	disability = TRUE
 	mob_trait = TRAIT_BLIND
 	gain_text = "<span class='danger'>You can't see anything.</span>"
 	lose_text = "<span class='notice'>You miraculously gain back your vision.</span>"
@@ -34,6 +35,7 @@
 	name = QUIRK_DEAF
 	desc = "You are incurably deaf."
 	value = -2
+	disability = TRUE
 	mob_trait = TRAIT_DEAF
 	gain_text = "<span class='danger'>You can't hear anything.</span>"
 	lose_text = "<span class='notice'>You're able to hear again!</span>"
@@ -75,7 +77,7 @@
 	H.update_mutations()
 	H.update_inv_w_uniform()
 	H.update_inv_wear_suit()
-
+	H.update_size_class()
 
 
 /datum/quirk/tourette
@@ -139,6 +141,7 @@
 /datum/quirk/mute
 	name = QUIRK_MUTE
 	desc = "You are completely and incurably mute."
+	disability = TRUE
 	value = -1
 	mob_trait = TRAIT_MUTE
 	gain_text = "<span class='danger'>Your voicebox feels wrong somehow.</span>"
@@ -221,3 +224,17 @@
 		become_afraid()
 	else
 		chill()
+
+/datum/quirk/genetic_degradation
+	name = QUIRK_GENETIC_DEGRADATION
+	desc = "An incurable genetic disease prevents your DNA from being reconstructed artificially."
+	value = -1
+
+	mob_trait = TRAIT_NO_CLONE
+	
+	req_species_flags = list(
+		NO_DNA = FALSE,
+		NO_SCAN = FALSE,
+		IS_PLANT = FALSE,
+		IS_SYNTHETIC = FALSE,
+	)

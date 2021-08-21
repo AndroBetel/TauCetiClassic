@@ -7,7 +7,7 @@
 	sharp = 1
 	edge = 0
 	throwforce = 5
-	w_class = ITEM_SIZE_SMALL
+	w_class = SIZE_TINY
 	icon = 'icons/obj/weapons.dmi'
 	icon_state = "metal-rod"
 	item_state = "bolt"
@@ -136,7 +136,7 @@
 
 	force = 10
 	ammo_type = list(/obj/item/ammo_casing/energy/sonic)
-	cell_type = "/obj/item/weapon/stock_parts/cell/super"
+	cell_type = /obj/item/weapon/stock_parts/cell/super
 	fire_delay = 40
 
 

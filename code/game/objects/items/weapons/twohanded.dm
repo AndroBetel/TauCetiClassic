@@ -19,7 +19,9 @@
  * Twohanded
  */
 /obj/item/weapon/twohanded
-	var/wielded = 0
+	var/wielded = FALSE
+	// When you pick up an item, it will be in two hands at once
+	var/only_twohand = FALSE
 	var/force_unwielded = 0
 	var/force_wielded = 0
 	var/wieldsound = null
@@ -27,13 +29,13 @@
 	var/obj/item/weapon/twohanded/offhand/offhand_item = /obj/item/weapon/twohanded/offhand
 
 /obj/item/weapon/twohanded/proc/unwield()
-	wielded = 0
+	wielded = FALSE
 	force = force_unwielded
 	name = "[initial(name)]"
 	update_icon()
 
 /obj/item/weapon/twohanded/proc/wield()
-	wielded = 1
+	wielded = TRUE
 	force = force_wielded
 	name = "[initial(name)] (Wielded)"
 	update_icon()
@@ -42,17 +44,31 @@
 	//Cannot equip wielded items.
 	if(wielded)
 		to_chat(M, "<span class='warning'>Unwield the [initial(name)] first!</span>")
-		return 0
+		return FALSE
 
 	return ..()
 
+/obj/item/weapon/twohanded/flora/equipped(mob/user, slot)
+	..()
+	if(!only_twohand)
+		return
+
+	if(slot == SLOT_R_HAND || slot == SLOT_L_HAND)
+		if(ishuman(user))
+			var/mob/living/carbon/human/H = user
+			var/W = H.wield(src, initial(name), wieldsound)
+			if(W)
+				wield()
+
 /obj/item/weapon/twohanded/dropped(mob/user)
+	..()
 	//handles unwielding a twohanded weapon when dropped as well as clearing up the offhand
 	if(user)
 		var/obj/item/weapon/twohanded/O = user.get_inactive_hand()
 		if(istype(O))
-			user.drop_from_inventory(O)
-	return	unwield()
+			O.unwield()
+
+	return unwield()
 
 /obj/item/weapon/twohanded/update_icon()
 	return
@@ -61,6 +77,9 @@
 	unwield()
 
 /obj/item/weapon/twohanded/attack_self(mob/user)
+	if(only_twohand)
+		return
+
 	if(istype(user,/mob/living/carbon/monkey))
 		to_chat(user, "<span class='warning'>It's too heavy for you to wield fully.</span>")
 		return
@@ -78,7 +97,7 @@
 
 		var/obj/item/weapon/twohanded/offhand/O = user.get_inactive_hand()
 		if(istype(O))
-			user.drop_from_inventory(O)
+			O.unwield()
 		return
 
 	else if(ishuman(user))
@@ -89,13 +108,14 @@
 
 ///////////OFFHAND///////////////
 /obj/item/weapon/twohanded/offhand
-	w_class = ITEM_SIZE_HUGE
+	w_class = SIZE_BIG
 	icon_state = "offhand"
 	name = "offhand"
 	flags = ABSTRACT
 
 /obj/item/weapon/twohanded/offhand/unwield()
-	qdel(src)
+	if(!QDELING(src))
+		qdel(src)
 
 /obj/item/weapon/twohanded/offhand/wield()
 	qdel(src)
@@ -110,7 +130,7 @@
 	force = 5
 	sharp = 1
 	edge = 1
-	w_class = ITEM_SIZE_LARGE
+	w_class = SIZE_NORMAL
 	slot_flags = SLOT_FLAGS_BACK
 	force_unwielded = 10
 	force_wielded = 40
@@ -168,7 +188,7 @@
 	throwforce = 5.0
 	throw_speed = 1
 	throw_range = 5
-	w_class = ITEM_SIZE_SMALL
+	w_class = SIZE_TINY
 	item_color = "green"
 	force_unwielded = 3
 	force_wielded = 45
@@ -247,7 +267,7 @@
 	if(wielded && prob(50))
 		spawn(0)
 			for(var/i in list(1,2,4,8,4,2,1,2,4,8,4,2))
-				user.dir = i
+				user.set_dir(i)
 				sleep(1)
 
 /obj/item/weapon/twohanded/dualsaber/Get_shield_chance()
@@ -275,13 +295,13 @@
 /obj/item/weapon/twohanded/dualsaber/afterattack(atom/target, mob/user, proximity, params)
 	if(!istype(target,/obj/machinery/door/airlock) || slicing)
 		return
-	if(target.density && wielded && proximity && in_range(user, target))
+	if(target.density && wielded && proximity)
 		user.visible_message("<span class='danger'>[user] start slicing the [target] </span>")
 		playsound(user, 'sound/items/Welder2.ogg', VOL_EFFECTS_MASTER)
 		slicing = TRUE
 		var/obj/machinery/door/airlock/D = target
 		var/obj/effect/I = new /obj/effect/overlay/slice(D.loc)
-		if(do_after(user, 450, target = D) && D.density && !(D.operating == -1) && in_range(user, D))
+		if(do_after(user, 450, target = D) && D.density && !(D.operating == -1))
 			sleep(6)
 			var/obj/structure/door_scrap/S = new /obj/structure/door_scrap(D.loc)
 			var/iconpath = D.icon
@@ -316,7 +336,7 @@
 /obj/item/weapon/twohanded/dualsaber/wield()
 	set_light(2)
 	hitsound = list('sound/weapons/blade1.ogg')
-	w_class = ITEM_SIZE_HUGE
+	w_class = SIZE_BIG
 	return ..()
 
 #undef DUALSABER_BLOCK_CHANCE_MODIFIER

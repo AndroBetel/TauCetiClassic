@@ -1,8 +1,8 @@
 /obj/structure/scrap_cube
 	name = "compressed scrap"
 	desc = "A cube made of scrap compressed with hydraulic clamp."
-	density = 1
-	anchored = 0
+	density = TRUE
+	anchored = FALSE
 	icon_state = "trash_cube"
 	icon = 'icons/obj/structures/scrap/refine.dmi'
 
@@ -30,7 +30,7 @@
 	desc = "This thing is messed up beyond any recognition. Into the grinder it goes!"
 	icon = 'icons/obj/structures/scrap/refine.dmi'
 	icon_state = "unrefined"
-	w_class = ITEM_SIZE_LARGE
+	w_class = SIZE_NORMAL
 
 /obj/item/weapon/scrap_lump/atom_init()
 	. = ..()
