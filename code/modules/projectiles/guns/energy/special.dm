@@ -480,6 +480,9 @@
 	var/obj/effect/portal/p_orange
 	var/obj/item/device/assembly/signaler/anomaly/firing_core = null
 
+/obj/item/weapon/gun/energy/gun/portal/emp_act(severity)
+	return
+
 /obj/item/weapon/gun/energy/gun/portal/Destroy()
 	qdel(p_blue)
 	qdel(p_orange)
@@ -569,6 +572,3 @@
 		qdel(p_blue)
 		p_blue = P
 	crosslink()
-
-/obj/item/weapon/gun/energy/gun/portal/emp_act(severity)
-	return
