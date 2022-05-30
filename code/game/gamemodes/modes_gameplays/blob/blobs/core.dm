@@ -1,5 +1,5 @@
 //Few global vars to track the blob
-var/blob_tiles_grown_total = 0
+var/global/blob_tiles_grown_total = 0
 var/global/list/blobs = list()
 var/global/list/blob_cores = list()
 var/global/list/blob_nodes = list()
@@ -16,13 +16,14 @@ var/global/list/blob_nodes = list()
 	var/point_rate = 2
 	var/last_resource_collection
 
-/obj/effect/blob/core/atom_init(mapload, h = 200, client/new_overmind, new_rate = 2)
+/obj/effect/blob/core/atom_init(mapload, client/new_overmind, h = 200, new_rate = 2)
 	blob_cores += src
 	START_PROCESSING(SSobj, src)
 	if(!overmind)
 		INVOKE_ASYNC(src, .proc/create_overmind, new_overmind)
 	point_rate = new_rate
 	last_resource_collection = world.time
+	health = h
 	. = ..()
 
 
@@ -83,7 +84,7 @@ var/global/list/blob_nodes = list()
 	var/list/candidates = list()
 
 	if(!new_overmind)
-		candidates = pollGhostCandidates("Would you like to be a BLOB?!", ROLE_BLOB)
+		candidates = pollGhostCandidates("Would you like to be a BLOB?!", ROLE_BLOB, IGNORE_EVENT_BLOB)
 		if(candidates.len)
 			var/mob/M = pick(candidates)
 			C = M.client
@@ -97,23 +98,15 @@ var/global/list/blob_nodes = list()
 	B.blob_core = src
 	src.overmind = B
 
-	var/datum/faction/blob_conglomerate/conglomerate = find_faction_by_type(/datum/faction/blob_conglomerate)
-	if(conglomerate) //Faction exists
-		if(!conglomerate.get_member_by_mind(B.mind)) //We are not a member yet
-			var/ded = TRUE
-			if(conglomerate.members.len)
-				for(var/datum/role/R in conglomerate.members)
-					if (R.antag && R.antag.current && !(R.antag.current.is_dead()))
-						ded = FALSE
-						break
-			add_faction_member(conglomerate, B, !ded)
-
-	else //No faction? Make one and you're the overmind.
-		conglomerate = SSticker.mode.CreateFaction(/datum/faction/blob_conglomerate)
-		if(conglomerate)
-			conglomerate.OnPostSetup()
-			conglomerate.forgeObjectives()
-			add_faction_member(conglomerate, B, FALSE)
+	var/datum/faction/blob_conglomerate/conglomerate = create_uniq_faction(/datum/faction/blob_conglomerate)
+	if(!conglomerate.get_member_by_mind(B.mind)) //We are not a member yet
+		var/ded = TRUE
+		if(conglomerate.members.len)
+			for(var/datum/role/R in conglomerate.members)
+				if (R.antag.current && !(R.antag.current.is_dead()))
+					ded = FALSE
+					break
+		add_faction_member(conglomerate, B, !ded)
 
 	conglomerate.declared = TRUE
 

@@ -13,7 +13,7 @@ var/global/sent_strike_team = FALSE
 		to_chat(usr, "<span class='red'>CentCom is already sending a team.</span>")
 		return FALSE
 
-	if (tgui_alert(usr, "Do you want to send in the CentCom death squad? Once enabled, this is irreversible.",,"Yes","No") != "Yes")
+	if (tgui_alert(usr, "Do you want to send in the CentCom death squad? Once enabled, this is irreversible.",,list("Yes","No")) != "Yes")
 		return FALSE
 
 	tgui_alert(usr, "This 'mode' will go on until everyone is dead or the station is destroyed. You may also admin-call the evac shuttle when appropriate. Spawned commandos have internals cameras which are viewable through a monitor inside the Spec. Ops. Office. Assigning the team's detailed task is recommended from there. While you will be able to manually pick the candidates from active ghosts, their assignment in the squad will be random.")
@@ -64,7 +64,7 @@ var/global/sent_strike_team = FALSE
 
 	var/is_leader_seleceted = FALSE
 
-	var/datum/faction/strike_team/deathsquad/S = SSticker.mode.CreateFaction(/datum/faction/strike_team/deathsquad)
+	var/datum/faction/strike_team/deathsquad/S = create_faction(/datum/faction/strike_team/deathsquad, FALSE, FALSE)
 	S.forgeObjectives(input)
 	// Spawns commandos and equips them.
 	for (var/obj/effect/landmark/L in landmarks_list)
@@ -120,9 +120,8 @@ var/global/sent_strike_team = FALSE
 	// Creates mind stuff
 	new_commando.mind_initialize()
 	new_commando.equip_death_commando(is_leader)
-	var/datum/faction/strike_team/deathsquad/D = find_faction_by_type(/datum/faction/strike_team/deathsquad)
-	if(D)
-		add_faction_member(D, new_commando, FALSE)
+	var/datum/faction/strike_team/deathsquad/D = create_uniq_faction(/datum/faction/strike_team/deathsquad)
+	add_faction_member(D, new_commando, FALSE)
 	return new_commando
 
 /mob/living/carbon/human/proc/equip_death_commando(is_leader)

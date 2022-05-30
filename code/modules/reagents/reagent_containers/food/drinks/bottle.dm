@@ -55,6 +55,7 @@
 			stop_spin_bottle = FALSE
 
 /obj/item/weapon/reagent_containers/food/drinks/bottle/pickup(mob/living/user)
+	. = ..()
 	animate(src, transform = null, time = 0) //Restore bottle to its original position
 
 
@@ -102,22 +103,11 @@
 	if(ishuman(target))
 
 		var/mob/living/carbon/human/H = target
-		var/headarmor = 0 // Target's head armour
 		armor_block = H.run_armor_check(def_zone, "melee") // For normal attack damage
 
-		//If they have a hat/helmet and the user is targeting their head.
-		if(istype(H.head, /obj/item/clothing/head) && def_zone == BP_HEAD)
-
-			// If their head has an armour value, assign headarmor to it, else give it 0.
-			if(H.head.armor["melee"])
-				headarmor = H.head.armor["melee"]
-			else
-				headarmor = 0
-		else
-			headarmor = 0
-
-		//Calculate the weakening duration for the target.
-		armor_duration = (duration - headarmor) + force
+		//Calculating the weakening duration for the target.
+		if(def_zone == BP_HEAD)
+			armor_duration = (duration - armor_block) + force
 
 	else
 		//Only humans can have armour, right?
@@ -182,7 +172,7 @@
 
 	name = "Broken Bottle"
 	desc = "A bottle with a sharp broken bottom."
-	w_class = ITEM_SIZE_SMALL
+	w_class = SIZE_TINY
 	icon = 'icons/obj/drinks.dmi'
 	icon_state = "broken_bottle"
 	force = 9.0

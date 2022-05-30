@@ -1,6 +1,6 @@
-var/list/preferences_datums = list()
+var/global/list/preferences_datums = list()
 
-var/const/MAX_SAVE_SLOTS = 10
+var/global/const/MAX_SAVE_SLOTS = 10
 
 #define MAX_GEAR_COST 5
 #define MAX_GEAR_COST_SUPPORTER MAX_GEAR_COST+3
@@ -52,6 +52,8 @@ var/const/MAX_SAVE_SLOTS = 10
 	var/outline_color = COLOR_BLUE_LIGHT
 	var/eorg_enabled = TRUE
 
+	var/show_runechat = TRUE
+
 	//TGUI
 	var/tgui_fancy = TRUE
 	var/tgui_lock = FALSE
@@ -76,6 +78,7 @@ var/const/MAX_SAVE_SLOTS = 10
 	var/be_random_name = 0				//whether we are a random name every round
 	var/gender = MALE					//gender of character (well duh)
 	var/age = 30						//age of character
+	var/height = HUMANHEIGHT_MEDIUM			//height of character
 	var/b_type = "A+"					//blood type (not-chooseable)
 	var/underwear = 1					//underwear type
 	var/undershirt = 1					//undershirt type
@@ -110,6 +113,7 @@ var/const/MAX_SAVE_SLOTS = 10
 	var/faction = "None"                //Antag faction/general associated faction.
 	var/religion = "None"               //Religious association.
 	var/nanotrasen_relation = "Neutral"
+	var/vox_rank = "Larva"              //Vox ranks
 
 	//Job preferences 2.0 - indexed by job title , no key or value implies never
 	var/list/job_preferences = list()
@@ -128,6 +132,11 @@ var/const/MAX_SAVE_SLOTS = 10
 	var/med_record = ""
 	var/sec_record = ""
 	var/gen_record = ""
+
+	// Qualities
+	// Quality selected.
+	var/selected_quality_name
+	var/selecting_quality = FALSE
 
 	// Quirk list
 	var/list/positive_quirks = list()
@@ -149,7 +158,6 @@ var/const/MAX_SAVE_SLOTS = 10
 	var/parallax = PARALLAX_HIGH
 	var/ambientocclusion = TRUE
 	var/auto_fit_viewport = TRUE
-	var/parallax_theme = PARALLAX_THEME_CLASSIC
 
   //custom loadout
 	var/list/gear = list()
@@ -343,7 +351,10 @@ var/const/MAX_SAVE_SLOTS = 10
 
 	character.gender = gender
 	character.age = age
+	character.height = height
 	character.b_type = b_type
+
+	character.regenerate_icons()
 
 	if(species == IPC)
 		qdel(character.bodyparts_by_name[BP_HEAD])
@@ -394,6 +405,7 @@ var/const/MAX_SAVE_SLOTS = 10
 	character.citizenship = citizenship
 	character.personal_faction = faction
 	character.religion = religion
+	character.vox_rank = vox_rank
 
 	// Destroy/cyborgize bodyparts & organs
 

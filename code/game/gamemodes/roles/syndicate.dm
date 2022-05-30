@@ -12,10 +12,6 @@
 
 	var/nuclear_outfit = /datum/outfit/nuclear
 
-/datum/role/operative/New()
-	..()
-	AddComponent(/datum/component/gamemode/syndicate, 20)
-
 /datum/role/operative/proc/NukeNameAssign(datum/mind/synd_mind)
 	var/choose_name = sanitize_safe(input(synd_mind.current, "You are a Gorlex Maradeurs agent! What is your name?", "Choose a name") as text, MAX_NAME_LEN)
 
@@ -32,7 +28,7 @@
 	if(ishuman(antag.current))
 		var/mob/living/carbon/human/H = antag.current
 		H.equipOutfit(nuclear_outfit)
-	antag.current.add_language("Sy-Code")
+	antag.current.add_language(LANGUAGE_SYCODE)
 
 	INVOKE_ASYNC(src, .proc/NukeNameAssign, antag)
 	return ..()
@@ -70,6 +66,10 @@
 	logo_state = "nuke-logo-leader"
 
 	nuclear_outfit = /datum/outfit/nuclear/leader
+
+/datum/role/operative/leader/New()
+	..()
+	AddComponent(/datum/component/gamemode/syndicate, 25)
 
 /datum/role/operative/leader/OnPostSetup(laterole)
 	. = ..()

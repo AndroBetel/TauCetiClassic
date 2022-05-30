@@ -76,7 +76,7 @@
 
 /obj/structure/stool/bed/roller/CanPass(atom/movable/mover)
 	if(iscarbon(mover) && mover.checkpass(PASSCRAWL))
-		return 0
+		return TRUE
 	return ..()
 
 /obj/structure/stool/bed/roller/Move(NewLoc, Dir = 0, step_x = 0, step_y = 0)
@@ -93,7 +93,7 @@
 	desc = "A collapsed roller bed that can be carried around."
 	icon = 'icons/obj/rollerbed.dmi'
 	icon_state = "folded"
-	w_class = ITEM_SIZE_LARGE // Can't be put in backpacks. Oh well.
+	w_class = SIZE_NORMAL // Can't be put in backpacks. Oh well.
 	var/type_bed = /obj/structure/stool/bed/roller
 	var/type_holder = /obj/item/roller_holder
 
@@ -139,8 +139,7 @@
 /obj/structure/stool/bed/roller/post_buckle_mob(mob/living/M)
 	if(M == buckled_mob)
 		if(M.crawling)
-			M.pass_flags &= ~PASSCRAWL
-			M.crawling = FALSE
+			M.SetCrawling(FALSE)
 			M.layer = 4.0
 		density = TRUE
 		icon_state = "up"

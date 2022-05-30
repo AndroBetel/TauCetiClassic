@@ -3,7 +3,7 @@
 /obj/item/device/flashlight/flare/torch
 	name = "torch"
 	desc = "A torch fashioned from some rags and a plank."
-	w_class = ITEM_SIZE_NORMAL
+	w_class = SIZE_SMALL
 	icon_state = "torch"
 	item_state = "torch"
 	light_color = LIGHT_COLOR_FIRE
@@ -48,10 +48,12 @@
 	return
 
 /obj/item/stack/sheet/wood/attackby(obj/item/I, mob/user, params)
-	if(istype(I, /obj/item/stack/medical/bruise_pack/rags) && use(1))
-		new /obj/item/device/flashlight/flare/torch(get_turf(user))
-		qdel(I)
-		return
+	if(istype(I, /obj/item/stack/medical/bruise_pack/rags))
+		var/turf/current_location = get_turf(src)
+		if(use(1))
+			new /obj/item/device/flashlight/flare/torch(current_location)
+			qdel(I)
+			return
 	return ..()
 
 /obj/item/stack/medical/bruise_pack/rags
@@ -206,7 +208,7 @@
 			var/mob/living/L = A
 			L.adjust_fire_stacks(fire_stack_strength)
 			L.IgniteMob()
-		else if(istype(A, /obj/item) && prob(20))
+		else if(isitem(A) && prob(20))
 			var/obj/item/O = A
 			O.microwave_act()
 */

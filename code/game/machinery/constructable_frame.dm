@@ -200,14 +200,13 @@
 				update_req_desc()
 				return
 
-			if(istype(P, /obj/item) && get_req_components_amt())
+			if(isitem(P) && get_req_components_amt())
 				for(var/I in req_components)
 					if(istype(P, I) && (req_components[I] > 0))
 						if(iscoil(P))
 							var/obj/item/stack/cable_coil/CP = P
-							var/cable_color = CP.item_color
 							if(CP.use(1))
-								var/obj/item/stack/cable_coil/CC = new(src, 1, cable_color)
+								var/obj/item/stack/cable_coil/CC = new(src, 1, CP.color)
 								components += CC
 								req_components[I]--
 								update_req_desc()
@@ -636,6 +635,17 @@ to destroy them and players will be able to make replacements.
 	name = "Circuit Board (MRSPACMAN-type Generator)"
 	build_path = /obj/machinery/power/port_gen/pacman/mrs
 	origin_tech = "programming=3;powerstorage=5;engineering=5"
+
+/obj/item/weapon/circuitboard/pacman/money
+	name = "Circuit Board (ANCAPMAN-type Generator)"
+	build_path = /obj/machinery/power/port_gen/pacman/money
+	origin_tech = "programming=3;powerstorage=5;engineering=5"
+	req_components = list(
+							/obj/item/weapon/stock_parts/matter_bin = 1,
+							/obj/item/weapon/stock_parts/micro_laser = 1,
+							/obj/item/stack/cable_coil = 2,
+							/obj/item/weapon/stock_parts/capacitor = 1,
+							/obj/item/weapon/storage/wallet = 1)
 
 /obj/item/weapon/circuitboard/rdserver
 	name = "Circuit Board (R&D Server)"

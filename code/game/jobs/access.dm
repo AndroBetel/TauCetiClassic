@@ -131,11 +131,14 @@
 /mob/living/silicon/robot/syndicate/GetAccess()
 	return list(access_maint_tunnels, access_syndicate, access_external_airlocks) //syndicate basic access
 
+/mob/living/silicon/robot/drone/syndi/GetAccess()
+	return list(access_maint_tunnels, access_syndicate, access_external_airlocks) //syndicate basic access
+
 /obj/item/proc/GetID()
 	return null
 
 /obj/proc/check_access(atom/movable/AM)
-	if(istype(src, /obj/machinery))
+	if(ismachinery(src))
 		var/obj/machinery/Machine = src
 		if(Machine.emagged)
 			return TRUE
@@ -437,7 +440,9 @@
 		"Supreme Commander",
 		"Emergency Response Team",
 		"Emergency Response Team Leader",
-		"NanoTrasen Representative")
+		"Organized Crimes Department",
+		"NanoTrasen Representative",
+		)
 
 /proc/get_all_velocity_jobs()
 	return list("Velocity Chief",

@@ -106,7 +106,7 @@
 				break
 
 			if(Target in view(1,src))
-				if(istype(Target, /mob/living/silicon))
+				if(issilicon(Target))
 					if(!Atkcool)
 						Atkcool = 1
 						spawn(45)
@@ -156,37 +156,24 @@
 		adjustToxLoss(rand(10,20))
 		return
 
-	//var/environment_heat_capacity = environment.heat_capacity()
 	var/loc_temp = get_temperature(environment)
-	/*
-	if((environment.temperature > (T0C + 50)) || (environment.temperature < (T0C + 10)))
-		var/transfer_coefficient
+	var/divisitor = 10
 
-		transfer_coefficient = 1
-		if(wear_mask && (wear_mask.body_parts_covered & HEAD) && (environment.temperature < wear_mask.protective_temperature))
-			transfer_coefficient *= wear_mask.heat_transfer_coefficient
+	var/temp_delta = loc_temp - bodytemperature
 
-		// handle_temperature_damage(HEAD, environment.temperature, environment_heat_capacity*transfer_coefficient)
-	*/
+	if(abs(temp_delta) > 50) // If the difference is great, reduce the divisor for faster stabilization
+		divisitor = 5
 
+	if(!on_fire)
+		adjust_bodytemperature(temp_delta / divisitor)
 
-	if(loc_temp < 310.15) // a cold place
-		bodytemperature += adjust_body_temperature(bodytemperature, loc_temp, 1)
-	else // a hot place
-		bodytemperature += adjust_body_temperature(bodytemperature, loc_temp, 1)
-
-	/*
-	if(stat==2)
-		bodytemperature += 0.1*(environment.temperature - bodytemperature)*environment_heat_capacity/(environment_heat_capacity + 270000)
-
-	*/
 	//Account for massive pressure differences
 
 	if(bodytemperature < (T0C + 5)) // start calculating temperature damage etc
 		if(bodytemperature <= (T0C - 40)) // stun temperature
 			Tempstun = 1
 
-		if(bodytemperature <= (T0C - 50)) // hurt temperature
+		if(bodytemperature <= (T0C - 45)) // hurt temperature
 			if(bodytemperature <= 50) // sqrting negative numbers is bad
 				adjustToxLoss(200)
 			else
@@ -199,24 +186,6 @@
 
 	return //TODO: DEFERRED
 
-
-/mob/living/carbon/slime/proc/adjust_body_temperature(current, loc_temp, boost)
-	var/temperature = current
-	var/difference = abs(current-loc_temp)	//get difference
-	var/increments// = difference/10			//find how many increments apart they are
-	if(difference > 50)
-		increments = difference/5
-	else
-		increments = difference/10
-	var/change = increments*boost	// Get the amount to change by (x per increment)
-	var/temp_change
-	if(current < loc_temp)
-		temperature = min(loc_temp, temperature+change)
-	else if(current > loc_temp)
-		temperature = max(loc_temp, temperature-change)
-	temp_change = (temperature - current)
-	return temp_change
-
 /mob/living/carbon/slime/proc/handle_chemicals_in_body()
 	if(reagents)
 		reagents.metabolize(src)
@@ -228,7 +197,7 @@
 
 /mob/living/carbon/slime/proc/handle_regular_status_updates()
 
-	if(istype(src, /mob/living/carbon/slime/adult))
+	if(isslimeadult(src))
 		health = 200 - (getOxyLoss() + getToxLoss() + getFireLoss() + getBruteLoss() + getCloneLoss())
 	else
 		health = 150 - (getOxyLoss() + getToxLoss() + getFireLoss() + getBruteLoss() + getCloneLoss())
@@ -277,7 +246,8 @@
 			src.lying = 0
 			src.stat = CONSCIOUS
 
-	if (src.stuttering) src.stuttering = 0
+	if (src.stuttering > 0)
+		setStuttering(0)
 
 	if (src.eye_blind)
 		src.eye_blind = 0
@@ -295,10 +265,10 @@
 		src.ear_deaf = 1
 
 	if (src.eye_blurry > 0)
-		src.eye_blurry = 0
+		setBlurriness(0)
 
 	if (src.druggy > 0)
-		src.druggy = 0
+		setDrugginess(0)
 
 	return 1
 
@@ -311,7 +281,7 @@
 	return
 /mob/living/carbon/slime/proc/handle_nutrition()
 	if(prob(20))
-		if(istype(src, /mob/living/carbon/slime/adult)) nutrition-=rand(4,6)
+		if(isslimeadult(src)) nutrition-=rand(4,6)
 		else nutrition-=rand(2,3)
 
 	if(nutrition <= 0)
@@ -321,7 +291,7 @@
 			adjustToxLoss(rand(0,5))
 
 	else
-		if(istype(src, /mob/living/carbon/slime/adult))
+		if(isslimeadult(src))
 			if(nutrition >= 1000)
 				if(prob(40)) amount_grown++
 
@@ -330,7 +300,7 @@
 				if(prob(40)) amount_grown++
 
 	if(amount_grown >= max_grown && !Victim && !Target)
-		if(istype(src, /mob/living/carbon/slime/adult))
+		if(isslimeadult(src))
 			if(!client)
 				for(var/i=1,i<=4,i++)
 					if(prob(70))
