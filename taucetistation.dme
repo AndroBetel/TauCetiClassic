@@ -2470,4 +2470,5 @@
 #include "orbital\jobs\jobs.dm"
 #include "orbital\jobs\outfits.dm"
 #include "orbital\jobs\skills.dm"
+#include "orbital\turfs\floor.dm"
 // END_INCLUDE
