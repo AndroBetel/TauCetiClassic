@@ -1,7 +1,8 @@
 /datum/species/human/monkey
 	name = MONKEY
 	gender_limb_icons = FALSE
-	fat_limb_icons = TRUE
+	has_gendered_icons = FALSE
+	// fat_limb_icons = TRUE
 	language = LANGUAGE_SOLCOMMON
 	primitive = /mob/living/carbon/monkey
 	unarmed_type = /datum/unarmed_attack/punch

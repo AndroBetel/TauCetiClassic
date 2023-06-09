@@ -2463,6 +2463,7 @@
 #include "maps\stroechka\job_changes.dm"
 #include "maps\testmap\job_changes.dm"
 #include "orbital\_defines.dm"
+#include "orbital\psionics.dm"
 #include "orbital\stash.dm"
 #include "orbital\gamemode\gamemode.dm"
 #include "orbital\gamemode\objectives.dm"
@@ -2472,5 +2473,6 @@
 #include "orbital\jobs\outfits.dm"
 #include "orbital\jobs\skills.dm"
 #include "orbital\structures\filing_cabinet.dm"
+#include "orbital\species\monkey\species.dm"
 #include "orbital\turfs\floor.dm"
 // END_INCLUDE

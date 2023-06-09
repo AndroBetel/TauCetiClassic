@@ -7,10 +7,14 @@
 
 /datum/job/prom/post_equip(mob/living/carbon/human/H, visualsOnly = FALSE)
 	. = ..()
+	if(!.)
+		return
+
 	if(visualsOnly)
 		return
 	if(!preffix)
 		return
+
 	var/names = splittext(H.real_name, " ")
 	var/last_name = names[length(names)]
 	H.radio_voice = "[preffix][last_name]"
@@ -27,14 +31,16 @@
 	selection_color = "#dddddd"
 	access = list(access_maint_tunnels)
 	//outfit = /datum/outfit/job/assistant/test_subject
+	skillsets = list("Assistant" = /datum/skillset/prom_assistant)
 
 /datum/job/prom/assistant/post_equip(mob/living/carbon/human/H, visualsOnly = FALSE)
 	. = ..()
-	if(!.)
-		return
 	H.set_species(MONKEY)
 	H.real_name = "Pon-Pon"
 	H.name = H.real_name
+	H.gender = MALE
+	H.mutations.Add(SMALLSIZE)
+	H.regenerate_icons()
 
 /datum/job/prom/captain
 	title = "Captain"
@@ -70,21 +76,6 @@
 	access = list(access_maint_tunnels, access_mailsorting, access_cargo, access_cargo_bot, access_qm, access_mint, access_mining, access_mining_station, access_recycler)
 	//outfit = /datum/outfit/job/prom_logistics_officer
 	skillsets = list("Logistics Officer" = /datum/skillset/prom_logistics_officer)
-
-/datum/job/prom/pilot
-	title = "Pilot"
-	preffix = "Flight Officer "
-	flag = MINER
-	department_flag = CIVILIAN
-	faction = "Station"
-	total_positions = 1
-	spawn_positions = 1
-	supervisors = "the marshal"
-	selection_color = "#d7b088"
-	idtype = /obj/item/weapon/card/id/cargo
-	access = list(access_mining, access_mint, access_mining_station, access_mailsorting)
-	//outfit = /datum/outfit/job/prom_pilot
-	skillsets = list("Pilot" = /datum/skillset/prom_pilot)
 
 /datum/job/prom/chief_engineer
 	title = "Chief Engineer"
@@ -151,7 +142,11 @@
 	idtype = /obj/item/weapon/card/id/med
 	access = list(access_medical, access_psychiatrist, access_medbay_storage)
 	//outfit = /datum/outfit/job/prom_psitherapist
-	skillsets = list("Psy-therapist" = /datum/skillset/prom_psitherapist)
+	skillsets = list("Psi-therapist" = /datum/skillset/prom_psitherapist)
+
+/datum/job/prom/psitherapist/post_equip(mob/living/carbon/human/H, visualsOnly = FALSE)
+	. = ..()
+	ADD_TRAIT(H, TRAIT_PSIONIC, JOB_TRAIT)
 
 /datum/job/prom/research_director
 	title = "Research Director"
@@ -212,3 +207,18 @@
 	)
 	//outfit = /datum/outfit/job/prom_marshal
 	skillsets = list("Marshal" = /datum/skillset/prom_marshal)
+
+/datum/job/prom/pilot
+	title = "Pilot"
+	preffix = "Flight Officer "
+	flag = OFFICER
+	department_flag = ENGSEC
+	faction = "Station"
+	total_positions = 1
+	spawn_positions = 1
+	supervisors = "the marshal"
+	selection_color = "#ffeeee"
+	idtype = /obj/item/weapon/card/id/sec
+	access = list(access_mining, access_mint, access_mining_station, access_mailsorting)
+	//outfit = /datum/outfit/job/prom_pilot
+	skillsets = list("Pilot" = /datum/skillset/prom_pilot)
