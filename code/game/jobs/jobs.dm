@@ -66,6 +66,9 @@ var/global/list/command_positions = list(
 	"Captain",
 	"Head of Personnel",
 	"Head of Security",
+	// <orbital>
+	"Marshal",
+	// </orbital>
 	"Chief Engineer",
 	"Research Director",
 	"Chief Medical Officer",
@@ -74,6 +77,12 @@ var/global/list/command_positions = list(
 
 var/global/list/security_positions = list(
 	"Head of Security",
+	// <orbital>
+	"Marshal",
+	// </orbital>
+	// <orbital>
+	"Pilot",
+	// </orbital>
 	"Warden",
 	"Detective",
 	"Forensic Technician",
@@ -83,6 +92,9 @@ var/global/list/security_positions = list(
 
 var/global/list/engineering_positions = list(
 	"Chief Engineer",
+	// <orbital>
+	"Engineer",
+	// </orbital>
 	"Station Engineer",
 	"Atmospheric Technician",
 	"Technical Assistant"
@@ -91,16 +103,25 @@ var/global/list/engineering_positions = list(
 var/global/list/medical_positions = list(
 	"Chief Medical Officer",
 	"Medical Doctor",
+	// <orbital>
+	"Medical Officer",
+	// </orbital>
 	"Paramedic",
 	"Chemist",
 	"Geneticist", //Part of both medical and science
 	"Virologist",
+	// <orbital>
+	"Psi-therapist",
+	// </orbital>
 	"Psychiatrist",
 	"Medical Intern"
 )
 
 var/global/list/science_positions = list(
 	"Research Director",
+	// <orbital>
+	"Specialist",
+	// </orbital>
 	"Scientist",
 	"Roboticist",
 	"Geneticist", //Part of both medical and science
@@ -125,6 +146,12 @@ var/global/list/civilian_positions = list(
 	"Janitor",
 	"Barber",
 	"Librarian",
+	// <orbital>
+	"Logistics Officer",
+	// </orbital>
+	// <orbital>
+	"Assistant",
+	// </orbital>
 	"Test Subject"
 )
 
