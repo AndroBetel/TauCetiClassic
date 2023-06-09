@@ -36,7 +36,7 @@
 /obj/structure/filingcabinet/atom_init()
 	. = ..()
 	for(var/obj/item/I in loc)
-// <orbital>
+	// <orbital>
 		if(is_type_in_list(I, can_hold))
 // </orbital>
 			I.loc = src
