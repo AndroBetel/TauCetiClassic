@@ -1024,7 +1024,7 @@
 			if(IS_ABOVE(src, S))
 				return TRUE
 			return FALSE
-// <orbital>
+	// <orbital>
 	if(istype(T, /turf/simulated/floor/plating/orbital))
 		if(lying)
 			return FALSE
