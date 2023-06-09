@@ -36,6 +36,9 @@
 /obj/structure/filingcabinet/atom_init()
 	. = ..()
 	for(var/obj/item/I in loc)
+	/* <base>
+		if(istype(I, /obj/item/weapon/paper) || istype(I, /obj/item/weapon/folder) || istype(I, /obj/item/weapon/photo) || istype(I, /obj/item/weapon/paper_bundle))
+	</base> */
 	// <orbital>
 		if(is_type_in_list(I, can_hold))
 	// </orbital>
@@ -43,6 +46,9 @@
 
 
 /obj/structure/filingcabinet/attackby(obj/item/P, mob/user)
+/* <base>
+	if(istype(P, /obj/item/weapon/paper) || istype(P, /obj/item/weapon/folder) || istype(P, /obj/item/weapon/photo) || istype(P, /obj/item/weapon/paper_bundle))
+</base> */
 // <orbital>
 	if(is_type_in_list(P, can_hold))
 // </orbital>
