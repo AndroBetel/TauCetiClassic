@@ -1,3 +1,29 @@
+/atom
+	var/psionic_traces
+
+/atom/add_hiddenprint(mob/M, ignoregloves = 0)
+	. = ..()
+	if(!M || !M.key || isAI(M))
+		return
+	if(fingerprintslast == M.key)
+		return
+	LAZYADD(psionic_traces, M.real_name)
+
+/atom/add_fingerprint(mob/M, ignoregloves = 0)
+	. = ..()
+	if(!M || !M.key || isAI(M))
+		return
+	if(fingerprintslast == M.key)
+		return
+	LAZYADD(psionic_traces, M.real_name)
+
+/atom/transfer_fingerprints_to(atom/A)
+	. = ..()
+	if(!psionic_traces)
+		return
+	LAZYINITLIST(A.psionic_traces)
+	A.psionic_traces += psionic_traces
+
 /atom/examine(mob/user, distance = -1)
 	. = ..()
 
@@ -5,22 +31,15 @@
 		return
 	if(!HAS_TRAIT(user, TRAIT_PSIONIC))
 		return
-
-	if(length(fingerprintshidden) < 1)
+	if(length(psionic_traces) < 1)
 		return
 
-	var/static/regex/fingerprint2real_name_regex = new(@"Real name: (.*),")
-
-	var/n = min(length(fingerprintshidden), 3)
+	var/n = min(length(psionic_traces), 3)
 	var/list/last_n_fingerprints = list()
 
 	for(var/i in 1 to n)
-		var/fingerprint = fingerprintshidden[length(fingerprintshidden) - i + 1]
-		if(!fingerprint2real_name_regex.Find(fingerprint))
-			continue
-		if(!fingerprint2real_name_regex.group[1])
-			continue
-		last_n_fingerprints += fingerprint2real_name_regex.group[1]
+		var/fingerprint = psionic_traces[length(psionic_traces) - i + 1]
+		last_n_fingerprints += fingerprint
 
 	if(length(last_n_fingerprints) < 1)
 		return
