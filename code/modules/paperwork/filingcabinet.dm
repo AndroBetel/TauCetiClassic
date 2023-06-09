@@ -20,7 +20,7 @@
 	resistance_flags = CAN_BE_HIT
 	// <orbital>
 	var/list/can_hold = list(/obj/item/weapon/paper, /obj/item/weapon/folder, /obj/item/weapon/photo, /obj/item/weapon/paper_bundle)
-// </orbital>
+	// </orbital>
 
 /obj/structure/filingcabinet/chestdrawer
 	name = "chest drawer"
