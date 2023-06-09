@@ -570,9 +570,12 @@
 	if(name_override)
 		return name_override
 	var/face_name = get_face_name()
+/* <base>
 	var/id_name = get_id_name("")
+
 	if(id_name && (id_name != face_name) && !face_name_priority)
 		return "[face_name] (as [id_name])"
+</base> */
 	return face_name
 
 //Returns "Unknown" if facially disfigured and real_name if not. Useful for setting name when polyacided or when updating a human's name variable

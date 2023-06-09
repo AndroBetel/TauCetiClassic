@@ -36,8 +36,10 @@
 		if(prob(50))
 			message = turret_talk(message)
 
+/* <base>
 	if(name != GetVoice())
 		alt_name = "(as [get_id_name("Unknown")])"
+</base> */
 
 	//parse the language code and consume it
 	var/list/parsed = parse_language(message)

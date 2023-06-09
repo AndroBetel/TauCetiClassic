@@ -100,10 +100,10 @@
 	if (miming && !(message_mode == "changeling" || message_mode == "alientalk" || message_mode == "mafia"))
 		to_chat(usr, "<span class='userdanger'>You are mute.</span>")
 		return
-
+/* <base>
 	if(!ignore_appearance && name != GetVoice())
 		alt_name = "(as [get_id_name("Unknown")])"
-
+</base> */
 	//parse the radio code and consume it
 	if (message_mode)
 		if (message_mode == "headset")
@@ -343,8 +343,10 @@
 	return real_name
 
 /mob/living/carbon/human/get_alt_name()
+/* <base>
 	if(name != GetVoice())
 		return " (as [get_id_name("Unknown")])"
+</base> */
 	return ""
 
 /*
