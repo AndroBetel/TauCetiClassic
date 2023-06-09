@@ -7,10 +7,10 @@
 	set category = "Object"
 	set src in usr
 
-	to_chat(usr, "Такие карты не используются на других станциях. Только на нашей они до сих пор в ходу.")
+	to_chat(usr, "РўР°РєРёРµ РєР°СЂС‚С‹ РЅРµ РёСЃРїРѕР»СЊР·СѓСЋС‚СЃСЏ РЅР° РґСЂСѓРіРёС… СЃС‚Р°РЅС†РёСЏС…. РўРѕР»СЊРєРѕ РЅР° РЅР°С€РµР№ РѕРЅРё РґРѕ СЃРёС… РїРѕСЂ РІ С…РѕРґСѓ.")
 
 /obj/item/weapon/card/id/orbital/attack_self(mob/user)
-	visible_message("[user] глупо машет своей карточкой.")
+	visible_message("[user] РіР»СѓРїРѕ РјР°С€РµС‚ СЃРІРѕРµР№ РєР°СЂС‚РѕС‡РєРѕР№.")
 
 /obj/item/weapon/card/id/orbital/captain
 	name = "captain's ID card"
