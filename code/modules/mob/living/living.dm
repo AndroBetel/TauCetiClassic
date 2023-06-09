@@ -1029,7 +1029,7 @@
 		if(lying)
 			return FALSE
 		return TRUE
-// </orbital>
+	// </orbital>
 	return TRUE
 
 /mob/living/var/crawl_getup = FALSE
