@@ -49,7 +49,7 @@
 
 /obj/item/weapon/card/id/orbital/logistics
 	name = "logistics ID card"
-	desc = "An ID card, issued to LO and, maybe, Assistant?."
+	desc = "An ID card, issued to LO and, maybe, Assistant?"
 	icon_state = "cargp"
 	item_state = "cargo_id"
 	access = list(access_cargo)
