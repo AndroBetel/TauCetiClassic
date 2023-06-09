@@ -18,9 +18,9 @@
 	anchored = TRUE
 
 	resistance_flags = CAN_BE_HIT
-
+// <orbital>
 	var/list/can_hold = list(/obj/item/weapon/paper, /obj/item/weapon/folder, /obj/item/weapon/photo, /obj/item/weapon/paper_bundle)
-
+// </orbital>
 
 /obj/structure/filingcabinet/chestdrawer
 	name = "chest drawer"
@@ -36,12 +36,16 @@
 /obj/structure/filingcabinet/atom_init()
 	. = ..()
 	for(var/obj/item/I in loc)
+// <orbital>
 		if(is_type_in_list(I, can_hold))
+// </orbital>
 			I.loc = src
 
 
 /obj/structure/filingcabinet/attackby(obj/item/P, mob/user)
+// <orbital>
 	if(is_type_in_list(P, can_hold))
+// </orbital>
 		to_chat(user, "<span class='notice'>You put [P] in [src].</span>")
 		user.drop_from_inventory(P, src)
 		icon_state = "[initial(icon_state)]-open"
