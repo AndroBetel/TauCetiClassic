@@ -1026,7 +1026,9 @@
 			return FALSE
 // <orbital>
 	if(istype(T, /turf/simulated/floor/plating/orbital))
-		return FALSE
+		if(lying)
+			return FALSE
+		return TRUE
 // </orbital>
 	return TRUE
 
