@@ -1024,6 +1024,10 @@
 			if(IS_ABOVE(src, S))
 				return TRUE
 			return FALSE
+// <orbital>
+	if(istype(T, /turf/simulated/floor/plating/orbital))
+		return FALSE
+// </orbital>
 	return TRUE
 
 /mob/living/var/crawl_getup = FALSE
