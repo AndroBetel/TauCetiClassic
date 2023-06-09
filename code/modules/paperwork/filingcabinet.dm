@@ -38,7 +38,7 @@
 	for(var/obj/item/I in loc)
 	// <orbital>
 		if(is_type_in_list(I, can_hold))
-// </orbital>
+	// </orbital>
 			I.loc = src
 
 
