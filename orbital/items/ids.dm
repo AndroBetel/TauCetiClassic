@@ -7,7 +7,7 @@
 	set category = "Object"
 	set src in usr
 
-	to_chat(usr, "Такие карты не используются на других станциях. Только на нашей они до сих пор в ходу.")
+	to_chat(usr, "Такие карточки давно не используются на других станциях. Только на нашей они до сих пор в ходу.")
 
 /obj/item/weapon/card/id/orbital/attack_self(mob/user)
 	visible_message("[user] глупо машет своей карточкой.")
