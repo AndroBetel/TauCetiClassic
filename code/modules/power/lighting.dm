@@ -317,6 +317,12 @@
 /obj/machinery/light/proc/update(trigger = 1)
 
 	update_icon()
+
+	if(HAS_TRAIT(SSroundfeature, STATION_TRAIT_LIGHTS_OUT))
+		set_light(0, 0, 0)
+		on = FALSE
+		icon_state = "[base_state][on]"
+		return
 	if(on)
 		var/BR = brightness_range
 		var/PO = brightness_power

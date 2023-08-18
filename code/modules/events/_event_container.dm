@@ -135,11 +135,17 @@ var/global/list/severity_to_string = list(EVENT_LEVEL_FEATURE = "RoundStart", EV
 /datum/event_container/feature
 	severity = EVENT_LEVEL_FEATURE
 	available_events = list(
+
+//		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Forgotten Telecomms",     /datum/event/feature/del_tcomms,                              0),
+		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Lights Out",              /datum/event/feature/lights_out,                              0),
+//		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Inflation",               /datum/event/feature/inflation,                               0),
+//		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Deflation",               /datum/event/feature/deflation,                               0),
+		)
 		// /datum/event_meta/New(event_severity, event_name, datum/event/type, event_weight, list/job_weights, is_one_shot = 0, event_enabled = 1, min_event_players = 0, min_event_weight = 0, max_event_weight = 0)
-		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Roundstart Nothing",      /datum/event/nothing, 1500),
+/*		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Roundstart Nothing",      /datum/event/nothing, 1500),
 		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Break Light",             /datum/event/feature/area/break_light,                        50, list(ASSIGNMENT_ENGINEER = 10, ASSIGNMENT_JANITOR = 40)),
 		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Dirt Bay",                /datum/event/feature/area/dirt,                               10, list(ASSIGNMENT_JANITOR = 100)),
-		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Randomize Cargo Storage", /datum/event/feature/area/cargo_storage,                      10),
+		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Forgotten Telecomms",     /datum/event/feature/area/no_tcomms,                          10),
 		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Armory Mess",             /datum/event/feature/area/mess/armory,                        10),
 		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Bridge Mess",             /datum/event/feature/area/mess/bridge,                        10),
 		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Medical Mess",            /datum/event/feature/area/mess/med_storage,                   10),
@@ -175,7 +181,7 @@ var/global/list/severity_to_string = list(EVENT_LEVEL_FEATURE = "RoundStart", EV
 		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Chiefs Animals",          /datum/event/feature/head_animals,                            10),
 		new /datum/event_meta(EVENT_LEVEL_FEATURE, "Nuke Journey",            /datum/event/feature/bomb_journey,                            10),
 	)
-
+*/
 /datum/event_container/mundane
 	severity = EVENT_LEVEL_MUNDANE
 	available_events = list(

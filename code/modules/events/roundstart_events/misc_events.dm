@@ -92,16 +92,6 @@ var/global/list/sec_closets_list = list()
 				log_game("RoundStart Event: [I] was removed from [closet] in [COORD(closet)]")
 				qdel(I)
 
-/datum/event/feature/vending_products/start()
-	message_admins("RoundStart Event: The range of vending machines has changed amount and price.")
-	for(var/obj/machinery/vending/V in machines)
-		for(var/datum/data/vending_product/VP in V.product_records)
-			if(!prob(80))
-				continue
-			VP.amount = rand(0, VP.amount)
-			VP.price = rand(-1, VP.amount**2)
-			log_game("RoundStart Event: [VP.product_name] has changed amount and price in [V] [COORD(V)].")
-
 /datum/event/feature/apc/start()
 	for(var/obj/machinery/power/apc/A in apc_list)
 		if(!prob(5))

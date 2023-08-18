@@ -45,7 +45,7 @@ SUBSYSTEM_DEF(events)
 
 /datum/controller/subsystem/events/proc/start_roundstart_event()
 	var/datum/event_container/feature/EC = event_containers[EVENT_LEVEL_FEATURE]
-	for(var/i in 1 to rand(1, 3))
+	for(var/i in 1)
 		EC.start_event()
 
 /datum/controller/subsystem/events/proc/event_complete(datum/event/E)

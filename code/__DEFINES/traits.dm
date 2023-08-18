@@ -195,3 +195,8 @@
 #define OBESITY_TRAIT      "obesity"
 #define LIFE_ASSIST_MACHINES_TRAIT            "life_assist_machines"
 #define FEAR_TRAIT         "fear"
+
+//station traits!
+#define STATION_TRAIT "station_trait"
+
+#define STATION_TRAIT_LIGHTS_OUT "lights_out"
