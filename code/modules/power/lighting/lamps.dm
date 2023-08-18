@@ -183,6 +183,10 @@
 /obj/machinery/light/attackby(obj/item/W, mob/user)
 	user.SetNextMove(CLICK_CD_MELEE)
 
+	if(HAS_TRAIT(SSroundfeature, STATION_TRAIT_LIGHTS_OUT))
+		to_chat(user, "Лампа не подходит к патрону...")
+		return
+
 	// Light replacer code
 	if(istype(W, /obj/item/device/lightreplacer))
 		if(status == LIGHT_OK)
