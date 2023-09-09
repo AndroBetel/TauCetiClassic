@@ -18,14 +18,28 @@
 /obj/structure/stool/bed/psych
 	name = "psychiatrists couch"
 	desc = "For prime comfort during psychiatric evaluations."
-	icon = 'icons/obj/objects.dmi'
 	icon_state = "psychbed"
 
 /obj/structure/stool/bed/alien
 	name = "resting contraption"
 	desc = "This looks similar to contraptions from earth. Could aliens be stealing our technology?"
-	icon = 'icons/obj/objects.dmi'
 	icon_state = "abed"
+
+/obj/structure/stool/bed/double
+	name = "double bed"
+	desc = "Royal bed for royal people - or for dearest lovers."
+
+/obj/structure/stool/bed/double/upper
+	icon_state = "double_bed_upper"
+
+/obj/structure/stool/bed/double/upper/post_buckle_mob(mob/living/M)
+	..()
+	if(M == buckled_mob)
+		M.pixel_y = 10
+	else
+		M.pixel_y = M.default_pixel_y
+/obj/structure/stool/bed/double/lower
+	icon_state = "double_bed_lower"
 
 /obj/structure/stool/bed/attack_paw(mob/user)
 	return attack_hand(user)

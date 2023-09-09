@@ -287,8 +287,9 @@
 
 /obj/item/weapon/card/id/apartments
 	name = "apartments access card"
-	desc = "Карта доступа к одной из комнат в апарт-отеле \"Каюта\"."
+	desc = "Карта доступа апарт-отеля \"Каюта\"."
 	icon_state = "apartments"
+	access = list(access_hotel)
 
 	slot_flags = 0
 

@@ -56,3 +56,11 @@
 	head = /obj/item/clothing/head/indiana
 	l_pocket = /obj/item/device/occult_scanner
 	r_pocket = /obj/item/weapon/occult_pinpointer
+
+/datum/outfit/job/assistant/hotel_employee
+	name = OUTFIT_JOB_NAME("Hotel Employee")
+
+	uniform = /obj/item/clothing/under/sl_suit
+	shoes = /obj/item/clothing/shoes/laceup
+	gloves = /obj/item/clothing/gloves/white
+	l_pocket = /obj/item/weapon/card/id/apartments

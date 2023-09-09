@@ -93,6 +93,7 @@
 /var/const/access_crate_cash = 200
 
 	//HOTEL
+/var/const/access_hotel = 300
 /var/const/access_hotel_one = 301
 /var/const/access_hotel_two = 302
 /var/const/access_hotel_three = 303

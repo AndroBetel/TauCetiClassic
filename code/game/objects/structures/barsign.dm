@@ -39,3 +39,10 @@
 	new /obj/item/stack/sheet/metal(loc, 2)
 	new /obj/item/stack/cable_coil(loc, 2)
 	..()
+
+/obj/structure/sign/double/hotel
+	name = "The Cabin"
+	desc = "Apart-hotel with color-coding."
+	icon = 'icons/obj/barsigns.dmi'
+	icon_state = "cabin"
+	anchored = TRUE

@@ -183,3 +183,8 @@
 	name = "engineering sign"
 	desc = "High-tech screen, showing you where shuttle engineering is."
 	icon_state = "shuttleng"
+
+/obj/structure/sign/borgi
+	name = "E-N the Borgi"
+	desc = "In remembrance of E-N, brave borgi who died fending off traitorous scum. While not the most memorable of station's pets, you were a good boy."
+	icon_state = "borgi_painting"

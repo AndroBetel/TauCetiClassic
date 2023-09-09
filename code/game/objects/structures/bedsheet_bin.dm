@@ -44,8 +44,14 @@ LINEN BINS
 /obj/item/weapon/bedsheet/blue
 	icon_state = "sheetblue"
 
+/obj/item/weapon/bedsheet/blue/double
+	icon_state = "sheetbluedouble"
+
 /obj/item/weapon/bedsheet/green
 	icon_state = "sheetgreen"
+
+/obj/item/weapon/bedsheet/green/double
+	icon_state = "sheetgreendouble"
 
 /obj/item/weapon/bedsheet/orange
 	icon_state = "sheetorange"
@@ -61,8 +67,11 @@ LINEN BINS
 /obj/item/weapon/bedsheet/red
 	icon_state = "sheetred"
 
-/obj/item/weapon/bedsheet/yellow
-	icon_state = "sheetyellow"
+/obj/item/weapon/bedsheet/red/double
+	icon_state = "sheetreddouble"
+
+/obj/item/weapon/bedsheet/yellow/double
+	icon_state = "sheetyellowdouble"
 
 /obj/item/weapon/bedsheet/mime
 	name = "mime's blanket"
