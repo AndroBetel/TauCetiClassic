@@ -1,8 +1,9 @@
 {
-    "map_name": Eldridge Station",
-    "map_path": eldridge
+    "map_name": "Eldridge Station",
+    "map_path": "eldridge",
     "map_file": "eldridge.dmm",
     "station_name": "NSS Eldridge",
     "station_name_ru": "КСН Элдридж",
-    "station_image": "eldridge"
+    "station_image": "gamma"
+
 }

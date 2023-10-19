@@ -17,5 +17,7 @@ ADD_TO_GLOBAL_LIST(/obj/machinery/floor_teleport, floor_teleport_list)
 
 	for(var/obj/machinery/floor_teleport/F in floor_teleport_list)
 		if(F.teleport_id == teleport_to_id)
-			for(var/obj/O in loc)
+			for(var/atom/movable/O in loc)
+				if(O == src || O.anchored)
+					continue
 				O.forceMove(F.loc)

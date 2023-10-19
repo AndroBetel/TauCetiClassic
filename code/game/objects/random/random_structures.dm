@@ -244,3 +244,20 @@
 					prob(7);/obj/random/structures/rare_crates,\
 					prob(2);/obj/random/mecha/working\
 				)
+
+/obj/random/structures/canister
+	name = "Random canister"
+	desc = "This is a random gas canister."
+	icon = 'icons/obj/atmos.dmi'
+	icon_state = "random"
+
+/obj/random/structures/canister/item_to_spawn()
+	return pick(\
+					/obj/machinery/portable_atmospherics/canister/air,\
+					/obj/machinery/portable_atmospherics/canister/carbon_dioxide,\
+					/obj/machinery/portable_atmospherics/canister/hydrogen,\
+					/obj/machinery/portable_atmospherics/canister/nitrogen,\
+					/obj/machinery/portable_atmospherics/canister/oxygen,\
+					/obj/machinery/portable_atmospherics/canister/phoron,\
+					/obj/machinery/portable_atmospherics/canister/sleeping_agent\
+				)
