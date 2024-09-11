@@ -7,7 +7,9 @@
 	idle_power_usage = 5
 	active_power_usage = 10
 	layer = 5
-
+	max_integrity = 25
+	damage_deflection = 5
+	integrity_failure = 0.2
 	var/list/network = list("SS13")
 	var/c_tag = null
 	var/c_tag_order = 999
@@ -87,7 +89,7 @@
 /obj/machinery/camera/emp_act(severity)
 	if(!isEmpProof() && status)
 		if(prob(100/severity))
-			addtimer(CALLBACK(src, .proc/fix_emp_state, network), 900)
+			addtimer(CALLBACK(src, PROC_REF(fix_emp_state), network), 900)
 			network = list()
 			stat |= EMPED
 			toggle_cam(TRUE)
@@ -455,3 +457,9 @@
 	cam["z"] = z
 	cam["isonstation"] = is_station_level(z)
 	return cam
+
+/obj/machinery/camera/atom_religify(datum/religion/R)
+	if(istype(R, /datum/religion/cult))
+		deconstruct(FALSE)
+		return TRUE
+	return ..()

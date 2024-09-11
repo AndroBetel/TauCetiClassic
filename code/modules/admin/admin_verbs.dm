@@ -88,7 +88,10 @@ var/global/list/admin_verbs_variables = list(
 	/client/proc/add_player_age,
 	/client/proc/grand_guard_pass,
 	/client/proc/mass_apply_status_effect,
-	/client/proc/add_nightshift_preset,
+	/client/proc/add_smartlight_preset,
+	/client/proc/set_area_smartlight,
+	/client/proc/set_level_light,
+	/client/proc/debug_bloom,
 )
 var/global/list/admin_verbs_ban = list(
 	/client/proc/unban_panel,
@@ -135,6 +138,7 @@ var/global/list/admin_verbs_spawn = list(
 var/global/list/admin_verbs_server = list(
 	/datum/admins/proc/startnow,
 	/datum/admins/proc/restart,
+	/datum/admins/proc/end_round,
 	/datum/admins/proc/delay,
 	/datum/admins/proc/delay_end,
 	/datum/admins/proc/toggleaban,
@@ -162,6 +166,7 @@ var/global/list/admin_verbs_debug = list(
 	/client/proc/generate_round_scoreboard,
 	/client/proc/save_statistics,
 	/client/proc/cmd_admin_list_open_jobs,
+	/client/proc/toggle_profiler,
 	/client/proc/Debug2,
 	/client/proc/forceEvent,
 	/client/proc/ZASSettings,
@@ -275,6 +280,7 @@ var/global/list/admin_verbs_hideable = list(
 	/client/proc/cmd_admin_add_random_ai_law,
 	/datum/admins/proc/startnow,
 	/datum/admins/proc/restart,
+	/datum/admins/proc/end_round,
 	/datum/admins/proc/delay,
 	/datum/admins/proc/delay_end,
 	/datum/admins/proc/toggleaban,
@@ -290,6 +296,7 @@ var/global/list/admin_verbs_hideable = list(
 	/datum/admins/proc/adjump,
 	/client/proc/cmd_admin_list_open_jobs,
 //	/client/proc/callproc,
+	/client/proc/toggle_profiler,
 	/client/proc/Debug2,
 	/client/proc/reload_admins,
 	/client/proc/cmd_debug_make_powernets,
@@ -468,11 +475,13 @@ var/global/list/admin_verbs_hideable = list(
 /client/proc/unban_panel()
 	set name = "Unban Panel"
 	set category = "Admin"
-	if(holder)
-		if(config.ban_legacy_system)
-			holder.unbanpanel()
-		else
-			holder.DB_ban_panel()
+	if(!holder)
+		return
+	if(!config.sql_enabled)
+		to_chat(usr, "<span class='notice'>SQL database is disabled. Setup it or use native Byond bans.</span>")
+		return
+		
+	holder.DB_ban_panel()
 	feedback_add_details("admin_verb","UBP") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 	return
 
@@ -542,7 +551,7 @@ var/global/list/admin_verbs_hideable = list(
 	if(!warned_ckey || !reason)
 		return
 
-	notes_add(warned_ckey, "ADMINWARN: " + reason, src, secret = 0)
+	notes_add(warned_ckey, "ADMINWARN: " + reason, admin_key = src.ckey, secret = 0)
 
 	var/client/C = directory[warned_ckey]
 	reason = sanitize(reason)
@@ -572,17 +581,23 @@ var/global/list/admin_verbs_hideable = list(
 	set desc = "Cause an explosion of varying strength at your location."
 
 	var/turf/epicenter = mob.loc
-	var/list/choices = list("Small Bomb", "Medium Bomb", "Big Bomb", "Custom Bomb", "Cancel")
+	var/list/choices = list("Small Bomb", "Medium Bomb", "Big Bomb", "Cap Bomb", "Nuke", "Custom Bomb", "Cancel")
 	var/choice = input("What size explosion would you like to produce?") in choices
 	switch(choice)
 		if(null)
 			return 0
 		if("Small Bomb")
-			explosion(epicenter, 1, 2, 3, 3)
+			explosion(epicenter, 1, 2, 3)
 		if("Medium Bomb")
-			explosion(epicenter, 2, 3, 4, 4)
+			explosion(epicenter, 2, 4, 6)
 		if("Big Bomb")
-			explosion(epicenter, 3, 5, 7, 5)
+			explosion(epicenter, 3, 6, 9)
+		if("Cap Bomb")
+			explosion(epicenter, SSexplosions.MAX_EX_DEVESTATION_RANGE, SSexplosions.MAX_EX_HEAVY_RANGE, SSexplosions.MAX_EX_LIGHT_RANGE)
+		if("Nuke")
+			if(tgui_alert(usr, "This will break things terribly, are you sure?", "Confirm", list("Ok", "Cancel")) == "Cancel")
+				return
+			SSticker.station_explosion_detonation(epicenter)
 		if("Custom Bomb")
 			var/devastation_range = input("Devastation range (in tiles):") as num
 			var/heavy_impact_range = input("Heavy impact range (in tiles):") as num
@@ -591,8 +606,8 @@ var/global/list/admin_verbs_hideable = list(
 			explosion(epicenter, devastation_range, heavy_impact_range, light_impact_range, flash_range)
 		if("Cancel")
 			return 0
-	log_admin("[ckey] creating an admin explosion at [epicenter.loc].")
-	message_admins("<span class='notice'>[ckey] creating an admin explosion at [epicenter.loc].</span>")
+	log_admin("[ckey] created an admin explosion ([choice]) at [epicenter.loc].")
+	message_admins("<span class='notice'>[ckey] created an admin explosion ([choice]) at [epicenter.loc].</span>")
 	feedback_add_details("admin_verb","DB") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 
 /client/proc/give_spell(mob/T as mob in mob_list) // -- Urist
@@ -661,7 +676,7 @@ var/global/list/admin_verbs_hideable = list(
 				break
 		disease_type = "[disease_type] ([jointext(D.effects, ", ")])"
 	else
-		D.makerandom(greater)
+		D.makerandom(greater, spread_vector = DISEASE_SPREAD_AIRBORNE)
 		if (!greater)
 			D.infectionchance = 1
 
@@ -919,20 +934,18 @@ var/global/list/admin_verbs_hideable = list(
 	set category = "Preferences"
 
 	prefs.chat_toggles ^= CHAT_ATTACKLOGS
-	if (prefs.chat_toggles & CHAT_ATTACKLOGS)
-		to_chat(usr, "You now will get attack log messages")
-	else
-		to_chat(usr, "You now won't get attack log messages")
+	prefs.save_preferences()
+	to_chat(src, "You now [(prefs.chat_toggles & CHAT_ATTACKLOGS) ? "will" : "won't"] get attack log messages.")
+	feedback_add_details("admin_verb","TALM") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 
 /client/proc/toggle_noclient_attacklogs()
 	set name = "Toggle No Client Attack Log Messages"
 	set category = "Preferences"
 
 	prefs.chat_toggles ^= CHAT_NOCLIENT_ATTACK
-	if (prefs.chat_toggles & CHAT_NOCLIENT_ATTACK)
-		to_chat(usr, "You now will get attack log messages for mobs that don't have a client")
-	else
-		to_chat(usr, "You now won't get attack log messages for mobs that don't have a client")
+	prefs.save_preferences()
+	to_chat(src, "You now [(prefs.chat_toggles & CHAT_NOCLIENT_ATTACK) ? "will" : "won't"] get attack log messages for mobs that don't have a client.")
+	feedback_add_details("admin_verb","TNCALM") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 
 /client/proc/toggleghostwriters()
 	set name = "Toggle ghost writers"
@@ -967,11 +980,9 @@ var/global/list/admin_verbs_hideable = list(
 	set category = "Preferences"
 
 	prefs.chat_toggles ^= CHAT_DEBUGLOGS
-	if (prefs.chat_toggles & CHAT_DEBUGLOGS)
-		to_chat(usr, "You now will get debug log messages")
-	else
-		to_chat(usr, "You now won't get debug log messages")
-
+	prefs.save_preferences()
+	to_chat(src, "You now [(prefs.chat_toggles & CHAT_DEBUGLOGS) ? "will" : "won't"] get debug log messages.")
+	feedback_add_details("admin_verb","TDLM") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 
 /client/proc/man_up(mob/T as mob in player_list)
 	set category = "Fun"
@@ -1125,7 +1136,7 @@ var/global/list/admin_verbs_hideable = list(
 // Map loader
 //////////////////////////////
 
-/client/proc/event_map_loader()
+/client/proc/event_map_loader() // rename
 	set category = "Event"
 	set name = "Event map loader"
 	if(!check_rights(R_EVENT))
@@ -1217,16 +1228,13 @@ var/global/centcom_barriers_stat = 1
 
 /obj/effect/landmark/trololo
 	name = "Rickroll"
-	//var/melody = 'sound/Never_Gonna_Give_You_Up.ogg'	//NOPE
 	var/message = "<i><span class='notice'>It's not the door you're looking for...</span></i>"
 	var/active = 1
-	var/lchannel = 999
 
 /obj/effect/landmark/trololo/Crossed(atom/movable/AM)
 	. = ..()
 	if(!active) return
-	/*if(iscarbon(M))
-		M.playsound_local(null, melody, VOL_EFFECTS_MASTER, 20, FALSE, channel = lchannel, wait = TRUE, ignore_environment = TRUE)*/
+	to_chat(usr, "<span class='notice'><b><font size=3>Never gonna give you up.</font></b></span>")
 
 /obj/structure/centcom_barrier
 	name = "Invisible wall"

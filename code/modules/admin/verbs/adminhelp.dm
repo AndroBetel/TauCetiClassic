@@ -358,7 +358,7 @@ var/global/datum/admin_help_tickets/ahelp_tickets
 	state = AHELP_RESOLVED
 	global.ahelp_tickets.ListInsert(src)
 
-	addtimer(CALLBACK(GLOBAL_PROC, /proc/giveadminhelpverb, initiator_ckey), 50)
+	addtimer(CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(giveadminhelpverb), initiator_ckey), 50)
 
 	AddInteraction("<font color='green'>Resolved by [key_name].</font>")
 	to_chat(initiator, "<span class='adminhelp'>Your ticket has been resolved by an admin. The Adminhelp verb will be returned to you shortly.</span>")
@@ -546,7 +546,7 @@ var/global/datum/admin_help_tickets/ahelp_tickets
 		return
 
 	//handle muting and automuting
-	if(prefs.muted & MUTE_ADMINHELP)
+	if(prefs.muted & MUTE_PM || IS_ON_ADMIN_CD(src, ADMIN_CD_PM))
 		to_chat_admin_pm(src, "<span class='warning'>Error: Admin-PM: You cannot send adminhelps (Muted).</span>")
 		return
 
@@ -560,7 +560,7 @@ var/global/datum/admin_help_tickets/ahelp_tickets
 	if(is_ahelp_cooldown())
 		return
 
-	if(handle_spam_prevention(msg, MUTE_ADMINHELP))
+	if(handle_spam_prevention(msg, ADMIN_CD_PM))
 		return
 
 	if(current_ticket)

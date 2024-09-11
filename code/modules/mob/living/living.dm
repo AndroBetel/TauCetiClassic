@@ -15,7 +15,7 @@
 		add_moveset(new moveset_type(), MOVESET_TYPE)
 
 	beauty = new /datum/modval(0.0)
-	RegisterSignal(beauty, list(COMSIG_MODVAL_UPDATE), .proc/update_beauty)
+	RegisterSignal(beauty, list(COMSIG_MODVAL_UPDATE), PROC_REF(update_beauty))
 
 	beauty.AddModifier("stat", additive=beauty_living)
 
@@ -52,12 +52,20 @@
 	med_hud_set_health()
 	med_hud_set_status()
 
+/mob/living/CanPass(atom/movable/mover, turf/target, height)
+	if(istype(mover, /obj/item/projectile) && lying && stat != DEAD)
+		var/obj/item/projectile/P = mover
+		if(get_turf(P.original) == loc)
+			return FALSE
+	return ..()
+
 //Generic Bump(). Override MobBump() and ObjBump() instead of this.
 /mob/living/Bump(atom/A, yes)
 	if (buckled || !yes || now_pushing)
 		return
+	SEND_SIGNAL(src, COMSIG_LIVING_BUMPED, A)
 	if(!ismovable(A) || is_blocked_turf(A))
-		if(confused && stat == CONSCIOUS && m_intent == "run")
+		if(confused && stat == CONSCIOUS && m_intent == MOVE_INTENT_RUN && !lying)
 			playsound(get_turf(src), pick(SOUNDIN_PUNCH_MEDIUM), VOL_EFFECTS_MASTER)
 			visible_message("<span class='warning'>[src] [pick("ran", "slammed")] into \the [A]!</span>")
 			apply_damage(3, BRUTE, pick(BP_HEAD , BP_CHEST , BP_L_LEG , BP_R_LEG))
@@ -89,6 +97,9 @@
 	if(prob(10) && iscarbon(src) && iscarbon(M))
 		var/mob/living/carbon/C = src
 		C.spread_disease_to(M, DISEASE_SPREAD_CONTACT)
+
+	if(moving_diagonally)
+		return 1
 
 	if(M.pulling == src)
 		M.stop_pulling()
@@ -157,6 +168,8 @@
 //Called when we want to push an atom/movable
 /mob/living/proc/PushAM(atom/movable/AM)
 	if(now_pushing)
+		return 1
+	if(moving_diagonally)
 		return 1
 	if(!AM.anchored)
 		now_pushing = 1
@@ -383,36 +396,29 @@
  */
 /mob/proc/blurEyes(amount)
 	if(amount > 0)
-		eye_blurry = max(amount, eye_blurry)
-	update_eye_blur()
+		update_eye_blur(max(amount, eye_blurry))
 
 /**
  * Adjust the current blurriness of the mobs vision by amount
  */
 /mob/proc/adjustBlurriness(amount)
-	eye_blurry = max(eye_blurry + amount, 0)
-	update_eye_blur()
+	update_eye_blur(max(eye_blurry + amount, 0))
 
 /**
  * Set the mobs blurriness of vision to an amount
  */
 /mob/proc/setBlurriness(amount)
-	eye_blurry = max(amount, 0)
-	update_eye_blur()
+	update_eye_blur(max(amount, 0))
 
 /**
  * Apply the blurry overlays to a mobs clients screen
  */
-/mob/proc/update_eye_blur()
-	if(!client)
-		return
-	var/atom/movable/plane_master_controller/game_plane_master_controller = hud_used.plane_master_controllers[PLANE_MASTERS_GAME]
-	if(eye_blurry)
-		game_plane_master_controller.add_filter("eye_blur_angular", 1, angular_blur_filter(16, 16, clamp(eye_blurry * 0.1, 0.2, 0.6)))
-		game_plane_master_controller.add_filter("eye_blur_gauss", 1, gauss_blur_filter(clamp(eye_blurry * 0.05, 0.1, 0.25)))
-	else
-		game_plane_master_controller.remove_filter("eye_blur_angular")
-		game_plane_master_controller.remove_filter("eye_blur_gauss")
+/mob/proc/update_eye_blur(value)
+	if(eye_blurry != value)
+		eye_blurry = value
+
+		if(client)
+			client.update_plane_masters(/atom/movable/screen/plane_master/game_world)
 
 // ============================================================
 
@@ -514,6 +520,9 @@
 /mob/living/proc/restore_all_bodyparts()
 	return
 
+/mob/living/proc/restore_all_organs()
+	return
+
 /mob/living/proc/revive()
 	rejuvenate()
 	if(buckled)
@@ -567,18 +576,15 @@
 
 	SetDrunkenness(0)
 
-	if(iscarbon(src))
-		var/mob/living/carbon/C = src
-		C.shock_stage = 0
-
-		if(ishuman(src))
-			var/mob/living/carbon/human/H = src
-			H.restore_blood()
-			H.full_prosthetic = null
-			var/obj/item/organ/internal/heart/Heart = H.organs_by_name[O_HEART]
-			Heart?.heart_normalize()
+	if(ishuman(src))
+		var/mob/living/carbon/human/H = src
+		H.restore_blood()
+		H.full_prosthetic = null
+		var/obj/item/organ/internal/heart/Heart = H.organs_by_name[O_HEART]
+		Heart?.heart_normalize()
 
 	restore_all_bodyparts()
+	restore_all_organs()
 	cure_all_viruses()
 
 	// remove the character from the list of the dead
@@ -704,7 +710,7 @@
 
 		. = ..()
 
-		if(pulling && !restrained())
+		if(pulling && !restrained() && old_loc != loc)
 			var/diag = get_dir(src, pulling)
 			if(get_dist(src, pulling) > 1 || ISDIAGONALDIR(diag))
 				if(isliving(pulling))
@@ -910,7 +916,7 @@
 			if (istype(C.buckled,/obj/structure/stool/bed/nest))
 				C.buckled.user_unbuckle_mob(C)
 				return
-			if(C.handcuffed || istype(C.buckled, /obj/machinery/optable/torture_table))
+			if(istype(C.buckled, /obj/machinery/optable/torture_table))
 				C.next_move = world.time + 100
 				C.last_special = world.time + 100
 				C.visible_message("<span class='danger'>[usr] attempts to unbuckle themself!</span>", self_message = "<span class='rose'>You attempt to unbuckle yourself. (This will take around 2 minutes and you need to stand still)</span>")
@@ -930,10 +936,9 @@
 			C.container_resist(L)
 
 	//breaking out of handcuffs and putting off fires
-	else if(iscarbon(L))
+	if(iscarbon(L))
 		var/mob/living/carbon/CM = L
-		if(CM.on_fire)
-			if(!CM.canmove && !CM.crawling)	return
+		if(CM.on_fire && CM.canmove && !(CM.lying || CM.crawling))
 			CM.fire_stacks -= 5
 			CM.Stun(5)
 			CM.Weaken(5)
@@ -966,7 +971,7 @@
 				CM.visible_message("<span class='danger'>[usr] attempts to remove \the [HC]!</span>", self_message = "<span class='notice'>You attempt to remove \the [HC]. (This will take around [displaytime] minutes and you need to stand still)</span>")
 				spawn(0)
 					if(do_after(CM, breakouttime, target = usr))
-						if(!CM.handcuffed || CM.buckled)
+						if(!CM.handcuffed)
 							return // time leniency for lag which also might make this whole thing pointless but the server lags so hard that 40s isn't lenient enough - Quarxink
 						if(istype(HC, /obj/item/weapon/handcuffs/alien))
 							CM.visible_message("<span class='danger'>[CM] break in a discharge of energy!</span>", \
@@ -1032,14 +1037,13 @@
 	set name = "Crawl"
 	set category = "IC"
 
-	if(isrobot(usr))
-		var/mob/living/silicon/robot/R = usr
-		R.toggle_all_components()
-		to_chat(R, "<span class='notice'>You toggle all your components.</span>")
+	if(!crawling && HAS_TRAIT(src, TRAIT_NO_CRAWL))
+		to_chat(src, "<span class='warning'>Нет! ПОЛ ГРЯЗНЫЙ!</span>")
 		return
 
 	if(crawl_getup)
 		return
+
 
 	if((status_flags & FAKEDEATH) || buckled)
 		return
@@ -1052,6 +1056,11 @@
 		return
 
 	if(crawling)
+		if(iscarbon(src))
+			var/mob/living/carbon/C = src
+			if(C.traumatic_shock >= TRAUMATIC_SHOCK_CRITICAL)
+				to_chat(C, "<span class='danger'>I'm in so much pain! I can not get up!</span>")
+				return
 		crawl_getup = TRUE
 		if(do_after(src, 10, target = src))
 			crawl_getup = FALSE
@@ -1082,7 +1091,8 @@
 /mob/living/proc/flash_eyes(intensity = 1, override_blindness_check = 0, affect_silicon = 0, visual = 0, type = /atom/movable/screen/fullscreen/flash)
 	if(override_blindness_check || !(disabilities & BLIND))
 		overlay_fullscreen("flash", type)
-		addtimer(CALLBACK(src, .proc/clear_fullscreen, "flash", 25), 25)
+		addtimer(CALLBACK(src, PROC_REF(clear_fullscreen), "flash", 25), 25)
+		SEND_SIGNAL(src, COMSIG_FLASH_EYES, intensity)
 		return TRUE
 	return FALSE
 
@@ -1334,19 +1344,13 @@
 		if(masked)
 			visible_message("<span class='warning bold'>[name]</span> <span class='warning'>gags on their own puke!</span>",
 							"<span class='warning'>You gag on your own puke, damn it, what could be worse!</span>")
-			if(gender == FEMALE)
-				vomitsound = SOUNDIN_FRIGVOMIT
-			else
-				vomitsound = SOUNDIN_MRIGVOMIT
-			eye_blurry = max(10, eye_blurry)
+			vomitsound = get_sound_by_voice(src, SOUNDIN_MRIGVOMIT, SOUNDIN_FRIGVOMIT)
+			blurEyes(10)
 			losebreath += 20
 		else
 			visible_message("<span class='warning bold'>[name]</span> <span class='warning'>throws up!</span>",
 							"<span class='warning'>You throw up!</span>")
-			if(gender == FEMALE)
-				vomitsound = SOUNDIN_FEMALEVOMIT
-			else
-				vomitsound = SOUNDIN_MALEVOMIT
+			vomitsound = get_sound_by_voice(src, SOUNDIN_MALEVOMIT, SOUNDIN_FEMALEVOMIT)
 		make_jittery(max(35 - jitteriness, 0))
 		playsound(src, pick(vomitsound), VOL_EFFECTS_MASTER, null, FALSE)
 	else
@@ -1418,6 +1422,8 @@
 /mob/living/death(gibbed)
 	beauty.AddModifier("stat", additive=beauty_dead)
 	update_health_hud()
+	if(wabbajacked)
+		unwabbajack()
 	return ..()
 
 /mob/living/proc/update_beauty(datum/source, old_value)
@@ -1457,6 +1463,7 @@
 	drunkenness = max(value, drunkenness)
 
 /mob/living/proc/handle_drunkenness()
+	var/heal_mod = 0.0
 	if(drunkenness <= 0)
 		drunkenness = 0
 		SEND_SIGNAL(src, COMSIG_CLEAR_MOOD_EVENT, "drunk")
@@ -1475,18 +1482,28 @@
 	if(drunkenness >= DRUNKENNESS_PASS_OUT)
 		Paralyse(3)
 		drowsyness = max(drowsyness, 3)
+		heal_mod = 10.0
 		return
 
 	if(drunkenness >= DRUNKENNESS_BLUR)
-		eye_blurry = max(eye_blurry, 2)
+		blurEyes(2)
+		heal_mod = 8.0
 
 	if(drunkenness >= DRUNKENNESS_SLUR)
 		if(drowsyness)
 			drowsyness = max(drowsyness, 3)
 		slurring = max(slurring, 3)
+		heal_mod = 4.0
 
 	if(drunkenness >= DRUNKENNESS_CONFUSED)
 		MakeConfused(2)
+		heal_mod = 6.0
+
+	if(HAS_ROUND_ASPECT(ROUND_ASPECT_HEALING_ALCOHOL))
+		adjustBruteLoss(-1.0 * heal_mod)
+		adjustFireLoss(-1.0 * heal_mod)
+		AdjustWeakened(-0.5 * heal_mod)
+		adjustHalLoss(-2.0 * heal_mod)
 
 /mob/living/carbon/human/handle_drunkenness()
 	. = ..()
@@ -1506,3 +1523,47 @@
 
 /mob/living/proc/get_pumped(bodypart)
 	return 0
+
+// return TRUE if we failed our interaction
+/mob/living/interact_prob_brain_damage(atom/object)
+	if(getBrainLoss() >= 60)
+		visible_message("<span class='warning'>[src] stares cluelessly at [isturf(object.loc) ? object : ismob(object.loc) ? object : "something"] and drools.</span>")
+		return TRUE
+	else if(prob(getBrainLoss()))
+		to_chat(src, "<span class='warning'>You momentarily forget how to use [object].</span>")
+		return TRUE
+
+//Quality proc
+/mob/living/proc/trigger_syringe_fear()
+	to_chat(src, "<span class='userdanger'>IT'S A SYRINGE!!!</span>")
+	if(prob(5))
+		eye_blind = 20
+		blurEyes(40)
+		to_chat(src, "<span class='warning'>Darkness closes in...</span>")
+	if(prob(5))
+		hallucination = max(hallucination, 200)
+		to_chat(src, "<span class='warning'>Ringing in your ears...</span>")
+	if(prob(10))
+		SetSleeping(40 SECONDS)
+		to_chat(src, "<span class='warning'>Your will to fight wavers.</span>")
+	if(prob(30))
+		Paralyse(20)
+	if(prob(40))
+		make_dizzy(150)
+	SEND_SIGNAL(src, COMSIG_ADD_MOOD_EVENT, "scared", /datum/mood_event/scared)
+
+/mob/living/proc/pickup_ore()
+	return
+
+/mob/living/carbon/human/trigger_syringe_fear() // move to carbon/human
+	..()
+	if(prob(15))
+		var/bodypart_name = pick(BP_CHEST , BP_L_ARM , BP_R_ARM , BP_GROIN)
+		var/obj/item/organ/external/BP = get_bodypart(bodypart_name)
+		if(BP)
+			BP.take_damage(8, used_weapon = "Syringe") 	//half kithen-knife damage
+			to_chat(src, "<span class='warning'>You got a cut with a syringe.</span>")
+
+/mob/living/reset_view(atom/A, force_remote_viewing)
+	..()
+	src.force_remote_viewing = force_remote_viewing

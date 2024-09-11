@@ -89,7 +89,7 @@
 	update_canmove()
 
 	//Update our name based on whether our face is obscured/disfigured
-	name = get_visible_name()
+	name = get_visible_name() // why in life wtf
 
 	//Species-specific update.
 	if(species)
@@ -134,31 +134,37 @@ var/global/list/tourette_bad_words= list(
  				 "УРОД","БЛЯ","ХЕР","ШЛЮХА","ДАВАЛКА","ПИЗДЕЦ","УЕБИЩЕ",
 				 "ПИЗДА","ЕЛДА","ШМАРА","СУЧКА","ПУТАНА","ААА","ГНИДА",
 				 "ГОНДОН","ЕЛДА","КРЕТИН","НАХУЙ","ХУЙ","ЕБАТЬ","ЕБЛО"),
-	TAJARAN = list("ГОВНО","ЖОПА","ЕБАЛ","БЛЯДИНА","ХУЕСОС","СУКА","ЗАЛУПА",
- 				   "УРОД","БЛЯ","ХЕР","ШЛЮХА","ДАВАЛКА","ПИЗДЕЦ","УЕБИЩЕ",
-	 			   "ПИЗДА","ЕЛДА","ШМАРА","СУЧКА","ПУТАНА","ААА","ГНИДА",
-	 			   "ГОНДОН","ЕЛДА","КРЕТИН","НАХУЙ","ХУЙ","ЕБАТЬ","ЕБЛО"),
+	TAJARAN = list("ИДИОТ","ДЕБИЛ","ДУРАК","ТУПИЦА","ПЕТУХ","УБЬЮ","СКОТИНА",
+ 				   "СКОТ","БЛЯ","ХЕР","ДУРА","ЖМОТ","ГОМОСЕКСУАЛ","ТЕРПИЛА",
+	 			   "МОШОНКА","ЯЙЦА","ШМАРА","СПЕРМОКРЫЛ","ПУТАНА","ААА","ТВАРЬ",
+	 			   "ГОНДОН","ЕЛДА","КРЕТИН","НАХЕР","ДУРАЧОК","СВЕРЛО"),
 	UNATHI = list("ГОВНО","ЖОПА","ЕБАЛ","БЛЯДИНА","ХУЕСОС","СУКА","ЗАЛУПА",
 				  "УРОД","БЛЯ","ХЕР","ШЛЮХА","ДАВАЛКА","ПИЗДЕЦ","УЕБИЩЕ",
 				  "ПИЗДА","ЕЛДА","ШМАРА","СУЧКА","ПУТАНА","ААА","ГНИДА",
-	 			  "ГОНДОН","ЕЛДА","КРЕТИН","НАХУЙ","ХУЙ","ЕБАТЬ","ЕБЛО"),
+	 			  "ГОНДОН","ЕЛДА","КРЕТИН","НАХУЙ","ХУЙ","ЕБАТЬ","ЕБЛО",
+				  "ПЕРНАТЫЙ","ОБМУДОК","ЧУЖАК","РАБ","КОШАК","ЖАБА","МЯСЦО",
+				  "ЕБЛАН", "ЖИВОТНОЕ", "ЧМО", "ПИРАТ", "МЕРЗАВЕЦ", "ИМПОТЕНТ"),
 	VOX = list("ГОВНО", "СЕДАЛИЩЕ", "ЧКАЛ", "СПАРИВАЛ", "ТВАРЬ",
 	 		   "ГНИЛОЙ", "МРАЗЬ", "ХВОСТ", "НАХВОСТ", "ХВОСТОЛИЗ",
 			   "КЛОАКА", "СКРЯТЬ", "СКАРАПУШ", "САМКА", "СКРЯПЫШ")
 			   )
 
 /mob/living/carbon/human/proc/handle_disabilities()
-	if (disabilities & EPILEPSY || HAS_TRAIT(src, TRAIT_EPILEPSY))
-		if (prob(1) && !paralysis)
-			visible_message("<span class='danger'>[src] starts having a seizure!</span>", self_message = "<span class='warning'>You have a seizure!</span>")
-			Paralyse(10)
-			make_jittery(1000)
+	SEND_SIGNAL(src, COMSIG_HANDLE_DISABILITIES)
 	if ((disabilities & COUGHING || HAS_TRAIT(src, TRAIT_COUGH)) && !reagents.has_reagent("dextromethorphan"))
 		if (prob(5) && !paralysis)
 			drop_item()
 			spawn( 0 )
 				emote("cough")
 				return
+
+	if((disabilities & NEARSIGHTED || HAS_TRAIT(src, TRAIT_NEARSIGHT)) && eye_blurry <= 3)
+		if(glasses)
+			var/obj/item/clothing/glasses/G = glasses
+			if(G.prescription)
+				return
+		adjustBlurriness(3)
+
 	if (disabilities & TOURETTES || HAS_TRAIT(src, TRAIT_TOURETTE))
 		if(!(get_species() in tourette_bad_words))
 			return
@@ -232,7 +238,7 @@ var/global/list/tourette_bad_words= list(
 					SetCrawling(TRUE)
 
 			if(13 to 18)
-				if(getBrainLoss() >= 60 && !HAS_TRAIT(src, TRAIT_STRONGMIND))
+				if(getBrainLoss() >= 60 && (!HAS_TRAIT(src, TRAIT_STRONGMIND) || get_species() != SKRELL))
 					switch(rand(1, 3))
 						if(1)
 							say(pick("азазаа!", "Я не смалгей!", "ХОС ХУЕСОС!", "[pick("", "ебучий трейтор")] [pick("морган", "моргун", "морген", "мрогун")] [pick("джемес", "джамес", "джаемес")] грефонет миня шпасит;е!!!", "ти можыш дать мне [pick("тилипатию","халку","эпиллепсию")]?", "ХАчу стать боргом!", "ПОЗОвите детектива!", "Хочу стать мартышкой!", "ХВАТЕТ ГРИФОНЕТЬ МИНЯ!!!!", "ШАТОЛ!"))
@@ -354,7 +360,6 @@ var/global/list/tourette_bad_words= list(
 
 	if(!(HAS_TRAIT(src, TRAIT_AV) || (contents.Find(internal) && wear_mask && (wear_mask.flags & MASKINTERNALS))))
 		internal = null
-		internals?.update_icon(src)
 		return null
 
 	//internal breath sounds
@@ -425,9 +430,8 @@ var/global/list/tourette_bad_words= list(
 	//Moved pressure calculations here for use in skip-processing check.
 	var/pressure = environment.return_pressure()
 	var/adjusted_pressure = calculate_affecting_pressure(pressure)
-	var/is_in_space = isspaceturf(get_turf(src))
 
-	if(!is_in_space) //space is not meant to change your body temperature.
+	if(environment.total_moles) //space is not meant to change your body temperature.
 		var/loc_temp = get_temperature(environment)
 
 		//If you're on fire, you do not heat up or cool down based on surrounding gases.
@@ -437,9 +441,11 @@ var/global/list/tourette_bad_words= list(
 			//Body temperature adjusts depending on surrounding atmosphere based on your thermal protection
 			adjust_bodytemperature(affecting_temp, use_insulation = TRUE, use_steps = TRUE)
 
-	else if(!species.flags[IS_SYNTHETIC] && !species.flags[RAD_IMMUNE])
+	else if(!species.flags[IS_SYNTHETIC] && !species.flags[RAD_IMMUNE] && isspaceturf(get_turf(src)))
 		if(istype(loc, /obj/mecha) || istype(loc, /obj/structure/transit_tube_pod))
 			return
+		if(HAS_ROUND_ASPECT(ROUND_ASPECT_HIGH_SPACE_RADIATION))
+			irradiate_one_mob(src, 5)
 		if(!(istype(head, /obj/item/clothing/head/helmet/space) && istype(wear_suit, /obj/item/clothing/suit/space)) && radiation < 100)
 			irradiate_one_mob(src, 5)
 
@@ -495,7 +501,6 @@ var/global/list/tourette_bad_words= list(
 			pressure_alert = -1
 		else
 			pressure_alert = -2
-			apply_effect(is_in_space ? 15 : 7, AGONY, 0)
 			take_overall_damage(burn=LOW_PRESSURE_DAMAGE, used_weapon = "Low Pressure")
 
 	//Check for contaminants before anything else because we don't want to skip it.
@@ -748,6 +753,8 @@ var/global/list/tourette_bad_words= list(
 					emote("gasp")
 			if(!reagents.has_reagent("inaprovaline"))
 				adjustOxyLoss(1)*/
+		if(species.flags[IS_SYNTHETIC])
+			hallucination = 0
 
 		if(hallucination)
 			if(hallucination >= 20)
@@ -770,16 +777,20 @@ var/global/list/tourette_bad_words= list(
 				//src << "<span class='notice'>You're in too much pain to keep going...</span>"
 				//for(var/mob/O in oviewers(src, null))
 				//	O.show_messageold("<B>[src]</B> slumps to the ground, too weak to continue fighting.", 1)
-				if(prob(3))
-					Paralyse(10)
-				else
-					Stun(5)
-					Weaken(10)
+				var/long_shock_allowed = !HAS_TRAIT_FROM(src, TRAIT_STEEL_NERVES, VIRUS_TRAIT)
+				if(long_shock_allowed)
+					if(prob(3))
+						Paralyse(10)
+					else
+						Stun(5)
+						Weaken(10)
 				setHalLoss(99)
 
 		if(paralysis)
 			blinded = 1
 			stat = UNCONSCIOUS
+			drop_from_inventory(l_hand)
+			drop_from_inventory(r_hand)
 			if(halloss > 0)
 				adjustHalLoss(-3)
 		else if(IsSleeping())
@@ -809,7 +820,9 @@ var/global/list/tourette_bad_words= list(
 
 
 		//Eyes
-		if(sdisabilities & BLIND || HAS_TRAIT(src, TRAIT_BLIND))	//disabled-blind, doesn't get better on its own
+		if(should_have_organ(O_EYES) && !has_organ(O_EYES))
+			blinded = 1
+		else if(sdisabilities & BLIND || HAS_TRAIT(src, TRAIT_BLIND))	//disabled-blind, doesn't get better on its own
 			blinded = 1
 		else if(eye_blind)			//blindness, heals slowly over time
 			eye_blind = max(eye_blind-1,0)
@@ -875,6 +888,9 @@ var/global/list/tourette_bad_words= list(
 		healthdoll.cut_overlays()
 		healthdoll.icon_state = "healthdoll_EMPTY"
 		for(var/obj/item/organ/external/BP in bodyparts)
+			if(SEND_SIGNAL(BP, COMSIG_BODYPART_UPDATING_HEALTH_HUD, src) & COMPONENT_OVERRIDE_BODYPART_HEALTH_HUD)
+				continue
+
 			if(!BP || BP.is_stump)
 				continue
 
@@ -895,7 +911,11 @@ var/global/list/tourette_bad_words= list(
 				else
 					icon_num = 5
 
-			healthdoll.add_overlay(image('icons/hud/screen_gen.dmi',"[BP.body_zone][icon_num]"))
+			if(get_painkiller_effect() <= PAINKILLERS_EFFECT_VERY_HEAVY)
+				healthdoll.icon_state = "health_numb"
+				healthdoll.cut_overlays()
+			else
+				healthdoll.add_overlay(image('icons/hud/screen_gen.dmi',"[BP.body_zone][icon_num]"))
 
 	if(!healths)
 		return
@@ -961,7 +981,7 @@ var/global/list/tourette_bad_words= list(
 			clear_fullscreen("oxy")
 
 		//Fire and Brute damage overlay (BSSR)
-		var/hurtdamage = getBruteLoss() + getFireLoss() + damageoverlaytemp
+		var/hurtdamage = ((getBruteLoss() + getFireLoss() + damageoverlaytemp) * get_painkiller_effect())
 		damageoverlaytemp = 0 // We do this so we can detect if someone hits us or not.
 		if(hurtdamage)
 			var/severity = 0
@@ -1007,7 +1027,7 @@ var/global/list/tourette_bad_words= list(
 		var/obj/item/clothing/mask/gas/welding/O = wear_mask
 		if(!O.up && tinted_weldhelh)
 			impaired = 2
-	if(istype(glasses, /obj/item/clothing/glasses/welding) )
+	if(istype(glasses, /obj/item/clothing/glasses/welding) && !istype(glasses, /obj/item/clothing/glasses/welding/superior))
 		var/obj/item/clothing/glasses/welding/O = glasses
 		if(!O.up && tinted_weldhelh)
 			impaired = max(impaired, 2)
@@ -1015,8 +1035,6 @@ var/global/list/tourette_bad_words= list(
 		overlay_fullscreen("impaired", /atom/movable/screen/fullscreen/impaired, impaired)
 	else
 		clear_fullscreen("impaired")
-
-	update_eye_blur()
 
 	if(!machine)
 		var/isRemoteObserve = 0
@@ -1056,7 +1074,7 @@ var/global/list/tourette_bad_words= list(
 		if(G.vision_flags) // MESONS
 			sight |= G.vision_flags
 		if(!isnull(G.lighting_alpha))
-			lighting_alpha = min(lighting_alpha, G.lighting_alpha)
+			set_lighting_alpha(min(lighting_alpha, G.lighting_alpha))
 		if(G.sightglassesmod && (G.active || !G.toggleable))
 			sightglassesmod = G.sightglassesmod
 		else
@@ -1080,6 +1098,11 @@ var/global/list/tourette_bad_words= list(
 
 	if(moody_color)
 		animate(client, color = moody_color, time = 5)
+	else
+		animate(client, color = null, time = 5)
+
+	if(painkiller_overlay_time)
+		animate(client, color = PAINKILLERS_FILTER, time = 5)
 	else
 		animate(client, color = null, time = 5)
 
@@ -1129,7 +1152,7 @@ var/global/list/tourette_bad_words= list(
 			if(isnull(V)) // Trying to figure out a runtime error that keeps repeating
 				CRASH("virus2 nulled before calling activate()")
 			else
-				V.activate(src)
+				V.on_process(src)
 			// activate may have deleted the virus
 			if(!V) continue
 
@@ -1141,68 +1164,52 @@ var/global/list/tourette_bad_words= list(
 
 /mob/living/carbon/human/handle_shock()
 	..()
-	if(status_flags & GODMODE)	return 0	//godmode
+	if(status_flags & GODMODE)	return FALSE	//godmode
 	if(species && species.flags[NO_PAIN])
 		return
 	if(analgesic && !reagents.has_reagent("prismaline"))
 		return // analgesic avoids all traumatic shock temporarily
 
-	if(health < config.health_threshold_softcrit)// health 0 makes you immediately collapse
-		shock_stage = max(shock_stage, 61)
+	var/message
 
-	if(traumatic_shock >= 80)
-		shock_stage += 1
-	else if(health < config.health_threshold_softcrit)
-		shock_stage = max(shock_stage, 61)
-	else
-		shock_stage = min(shock_stage, 160)
-		shock_stage = max(shock_stage-1, 0)
-		return
+	if(traumatic_shock >= TRAUMATIC_SHOCK_MINOR)
+		message = "<span class='warning'>[pick("You feel slight pain.", "Ow... That hurts.")]</span>"
 
-	if(shock_stage == 10)
-		to_chat(src, "<span class='danger'>[pick("It hurts so much!", "You really need some painkillers..", "Dear god, the pain!")]</span>")
-
-	if(shock_stage >= 30)
-		if(shock_stage == 30) me_emote("is having trouble keeping their eyes open.")
+	if(traumatic_shock >= TRAUMATIC_SHOCK_SERIOUS)
+		message = "<span class='boldwarning'><B>[pick("Ughhh... When will it end?", "You're wincing in pain!", "You really need some painkillers!")]</B></span>"
 		blurEyes(2)
 		stuttering = max(stuttering, 5)
 
-	if(shock_stage == 40)
-		to_chat(src, "<span class='danger'>[pick("The pain is excrutiating!", "Please, just end the pain!", "Your whole body is going numb!")]</span>")
+	if(traumatic_shock >= TRAUMATIC_SHOCK_INTENSE)
+		message = "<span class='danger'>[pick("Stop this pain!", "This pain is unbearable!", "Your whole body is going numb!")]</span>"
 
-	if (shock_stage >= 60)
-		if(shock_stage == 60)
-			visible_message("<span class='name'>[src]'s</span> body becomes limp.")
-		if (prob(2))
-			to_chat(src, "<span class='danger'>[pick("The pain is excrutiating!", "Please, just end the pain!", "Your whole body is going numb!")]</span>")
-			Stun(10)
-			Weaken(20)
+	if(traumatic_shock >= TRAUMATIC_SHOCK_MIND_SHATTERING)
+		message = "<span class='userdanger'><font size=5>[pick("The pain is excrutiating!", "Please, just end the pain!", "Your whole body is going numb!")]</font></span>"
+		if(prob(10) && !crawling)
+			Weaken(1)
 
-	if(shock_stage >= 80)
-		if (prob(5))
-			to_chat(src, "<span class='danger'>[pick("The pain is excrutiating!", "Please, just end the pain!", "Your whole body is going numb!")]</span>")
-			Stun(10)
-			Weaken(20)
-
-	if(shock_stage >= 120)
-		if (prob(2))
+	if(traumatic_shock >= TRAUMATIC_SHOCK_CRITICAL)
+		if(!crawling)
+			addtimer(CALLBACK(src, PROC_REF(knockdown_by_pain)), 7.5 SECOND)
+		if(prob(10))
 			to_chat(src, "<span class='danger'>[pick("You black out!", "You feel like you could die any moment now.", "You're about to lose consciousness.")]</span>")
-			Paralyse(5)
+			AdjustSleeping(10)
 
-	if(shock_stage == 150)
-		me_emote("can no longer stand, collapsing!")
-		Stun(10)
-		Weaken(20)
+	if(prob(15) && message)
+		to_chat(src, message)
 
-	if(shock_stage >= 150)
-		Stun(10)
-		Weaken(20)
+/mob/living/carbon/human/proc/knockdown_by_pain()
+	if(crawling || traumatic_shock <= TRAUMATIC_SHOCK_CRITICAL)
+		return
+	SetCrawling(TRUE)
+	drop_from_inventory(l_hand)
+	drop_from_inventory(r_hand)
 
 /mob/living/carbon/human/proc/handle_heart_beat()
 
 	if(pulse == PULSE_NONE) return
 
-	if(pulse == PULSE_2FAST || shock_stage >= 10 || isspaceturf(get_turf(src)))
+	if(pulse == PULSE_2FAST || traumatic_shock >= TRAUMATIC_SHOCK_INTENSE || isspaceturf(get_turf(src)))
 
 		var/temp = (5 - pulse)/2
 
@@ -1265,7 +1272,7 @@ var/global/list/tourette_bad_words= list(
 
 /mob/living/carbon/human/handle_nutrition()
 	. = ..()
-	if(nutrition > NUTRITION_LEVEL_WELL_FED)
+	if(nutrition > NUTRITION_LEVEL_FAT)
 		if(overeatduration < 600) //capped so people don't take forever to unfat
 			overeatduration++
 	else

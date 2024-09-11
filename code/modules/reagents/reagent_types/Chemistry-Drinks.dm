@@ -139,6 +139,11 @@
 	description = "Absolutely nothing."
 	taste_message = "nothing... how?"
 
+/datum/reagent/consumable/drink/nothing/on_general_digest(mob/living/M)
+	..()
+	if(HAS_TRAIT(M, TRAIT_MIMING))
+		M.heal_bodypart_damage(1, 1)
+
 /datum/reagent/consumable/drink/potato_juice
 	name = "Potato Juice"
 	id = "potato"
@@ -229,7 +234,7 @@
 	name = "Hot Chocolate"
 	id = "hot_coco"
 	description = "Made with love! And cocoa beans."
-	nutriment_factor = 2
+	nutriment_factor = 1
 	color = "#403010" // rgb: 64, 48, 16
 	adj_temp = 5
 	taste_message = "chocolate"
@@ -255,6 +260,11 @@
 	M.make_jittery(5)
 	if(adj_temp > 0 && holder.has_reagent("frostoil"))
 		holder.remove_reagent("frostoil", 10 * REAGENTS_METABOLISM)
+
+	if(!iscarbon(M))
+		return
+	var/mob/living/carbon/C = M
+	C.AdjustClumsyStatus(-2)
 
 /datum/reagent/consumable/drink/coffee/icecoffee
 	name = "Iced Coffee"
@@ -607,7 +617,7 @@
 		data["ticks"]++
 	else
 		data["ticks"] = 1
-		
+
 	M.make_dizzy(6)
 	switch(data["ticks"])
 		if(1 to 5)
@@ -726,7 +736,7 @@
 		return
 
 	M.drowsyness = max(0, M.drowsyness + adj_drowsy)
-	M.SetSleeping(adj_sleepy)
+	M.AdjustSleeping(adj_sleepy)
 
 	var/drunkpwr = boozepwr
 
@@ -1577,6 +1587,11 @@
 	color = "#664300" // rgb: 102, 67, 0
 	boozepwr = 4
 	taste_message = "mphhhh"
+
+/datum/reagent/consumable/ethanol/silencer/on_general_digest(mob/living/M)
+	..()
+	if(HAS_TRAIT(M, TRAIT_MIMING))
+		M.heal_bodypart_damage(1, 1)
 
 /datum/reagent/consumable/ethanol/silencer/on_general_digest(mob/living/M)
 	..()

@@ -207,7 +207,7 @@
 
 	if(data["ticks"] < 5)
 		return
-	
+
 	if(data["ticks"] == 5)
 		M.add_status_flags(FAKEDEATH)
 		M.tod = worldtime2text()
@@ -647,16 +647,16 @@
 	custom_metabolism = 0.1
 	taste_message = "something disgusting"
 	restrict_species = list(IPC, DIONA)
-
+	data = list()
 
 /datum/reagent/bonebreaker/on_general_digest(mob/living/carbon/human/H)
 	..()
 	if(!ishuman(H))
 		return
-	if(data["ticks"])
-		data["ticks"]++
-	else
+	if(!data["ticks"])
 		data["ticks"] = 1
+
+	data["ticks"]++
 	switch(data["ticks"])
 		if(1 to 30)
 			if(prob(15))
@@ -723,7 +723,7 @@
 		return
 	to_chat(H,"<span class='warning'><b>You grit your teeth in pain as your body rapidly mutates!</b></span>")
 	H.visible_message("<b>[H]</b> suddenly transforms!")
-	randomize_human(H)
+	H.randomize_appearance()
 
 /datum/reagent/slimetoxin
 	name = "Mutation Toxin"
@@ -927,3 +927,25 @@
 		M.drowsyness = max(M.drowsyness, 3)
 	if(prob(10))
 		M.emote("drool")
+	if(!istype(M))
+		return
+	SEND_SIGNAL(M, COMSIG_IMPEDREZENE_DIGEST)
+
+/datum/reagent/laughbidiol
+	name = "Laughbidiol"
+	id = "laughbidiol"
+	description = "Extract from laughweed"
+	reagent_state = LIQUID
+	color = "#3d9e29"
+	custom_metabolism = REAGENTS_METABOLISM * 0.5
+	overdose = REAGENTS_OVERDOSE
+	restrict_species = list(IPC, DIONA)
+
+/datum/reagent/laughbidiol/on_general_digest(mob/living/M)
+	..()
+	M.adjustDrugginess(2)
+	if(prob(25))
+		M.make_dizzy(10)
+		M.emote(pick("cough","laugh","giggle"))
+	if(prob(10))
+		M.Stuttering(1)

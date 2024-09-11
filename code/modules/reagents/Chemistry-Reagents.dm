@@ -23,7 +23,7 @@
 	var/list/restrict_species = list(IPC) // Species that simply can not digest this reagent.
 	var/list/flags = list()
 
-	var/overdose = 0
+	var/overdose = 0 // if var/overdose = 0, reagent has no overdose
 	var/overdose_dam = 1
 	var/color = "#000000" // rgb: 0, 0, 0 (does not support alpha channels - yet!)
 	var/color_weight = 1
@@ -199,6 +199,12 @@
 
 /datum/reagent/proc/on_slime_digest(mob/living/M)
 	return TRUE
+
+/datum/reagent/proc/on_serpentid_digest(mob/living/M)
+	return FALSE
+
+/datum/reagent/proc/on_moth_digest(mob/living/M)
+	return FALSE
 
 // Handles holy reagents.
 /datum/reagent/proc/handle_religions()

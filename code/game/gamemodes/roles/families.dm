@@ -3,13 +3,13 @@
 	id = GANGSTER
 
 	required_pref = ROLE_FAMILIES
-	restricted_jobs = list("Head of Personnel", "Security Cadet", "AI", "Cyborg", "Security Officer", "Warden", "Detective", "Head of Security", "Captain", "Internal Affairs Agent", "Blueshield Officer")
+	restricted_jobs = list("Head of Personnel", "Security Cadet", "AI", "Cyborg", "Security Officer", "Warden", "Head of Security", "Captain", "Internal Affairs Agent", "Blueshield Officer")
 
 	antag_hud_type = ANTAG_HUD_GANGSTER
 	antag_hud_name = "hud_gangster"
 
 	/// The action used to spawn family induction packages.
-	var/datum/action/cooldown/spawn_induction_package/package_spawner
+	var/datum/action/innate/spawn_induction_package/package_spawner
 	skillset_type = /datum/skillset/gangster
 
 /datum/role/gangster/New(datum/mind/M, datum/faction/fac, override)
@@ -27,8 +27,8 @@
 
 /datum/role/gangster/OnPostSetup(laterole)
 	..()
-	package_spawner.Grant(antag.current)
 	package_spawner.my_gang_datum = faction
+	package_spawner.Grant(antag.current)
 
 /datum/role/gangster/RemoveFromRole(datum/mind/M, msg_admins)
 	. = ..()

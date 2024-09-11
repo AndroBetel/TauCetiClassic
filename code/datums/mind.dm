@@ -47,7 +47,6 @@
 
 	var/datum/job/assigned_job
 
-	var/list/special_verbs = list()
 	var/list/antag_roles = list()		// All the antag roles we have.
 
 	var/antag_hud_icon_state = null //this mind's ANTAG_HUD should have this icon_state
@@ -64,10 +63,17 @@
 	var/creation_time = 0 //World time when this datum was New'd. Useful to tell how long since a character spawned
 	var/creation_roundtime
 
+	var/willpower_amount = 1
+	var/possible_willpower_effects = list(/datum/willpower_effect/painkiller, /datum/willpower_effect/skills, /datum/willpower_effect/nutrition, /datum/willpower_effect/fat)
+	var/willpower_effects = list()
+
 /datum/mind/New(key)
 	src.key = key
 	creation_time = world.time
 	creation_roundtime = roundduration2text()
+	for(var/WE in possible_willpower_effects)
+		var/i = new WE
+		willpower_effects += i
 
 /datum/mind/proc/transfer_to(mob/new_character)
 	for(var/role in antag_roles)
@@ -83,11 +89,12 @@
 
 	nanomanager.user_transferred(current, new_character) // transfer active NanoUI instances to new user
 
+	transfer_actions(new_character)
+
 	var/mob/old_character = current
 	current = new_character		//link ourself to our new body
 	new_character.mind = src	//and link our new body to ourself
 
-	transfer_actions(new_character)
 	var/datum/atom_hud/antag/hud_to_transfer = antag_hud
 	transfer_antag_huds(hud_to_transfer)
 
@@ -205,7 +212,7 @@
 	var/sorted_max = list()
 	for(var/skill_type in all_skills)
 		sorted_max[skill_type] = skills.get_max(skill_type)
-	sorted_max = sortTim(sorted_max, /proc/cmp_numeric_dsc, TRUE)
+	sorted_max = sortTim(sorted_max, GLOBAL_PROC_REF(cmp_numeric_dsc), TRUE)
 	var/row = 0
 	for(var/skill_type in sorted_max)
 		var/datum/skill/skill = all_skills[skill_type]
@@ -554,12 +561,23 @@
 		return R.GetFaction()
 	return FALSE
 
+/datum/mind/proc/IsPartOfFaction(datum/faction/F)
+	if(!length(antag_roles))
+		return FALSE
+
+	for(var/role_id in antag_roles)
+		var/datum/role/R = antag_roles[role_id]
+		if(R.GetFaction() == F)
+			return TRUE
+
+	return FALSE
+
 /datum/mind/proc/set_current(mob/new_current)
 	if(current)
 		UnregisterSignal(src, COMSIG_PARENT_QDELETING)
 	current = new_current
 	if(current)
-		RegisterSignal(src, COMSIG_PARENT_QDELETING, .proc/clear_current)
+		RegisterSignal(src, COMSIG_PARENT_QDELETING, PROC_REF(clear_current))
 
 /datum/mind/proc/clear_current(datum/source)
 	SIGNAL_HANDLER
@@ -624,7 +642,7 @@
 		while(count > 0 && candidates.len)
 			var/mob/M = pick(candidates)
 			candidates -= M
-			if(!M.mind)
+			if(!M.mind || !M.client.prefs.be_role.Find(role_req))
 				continue
 
 			if(isobserver(M))
@@ -640,7 +658,7 @@
 		while(count > 0 && candidates.len)
 			var/mob/M = pick(candidates)
 			candidates -= M
-			if(!M.mind)
+			if(!M.mind || !M.client.prefs.be_role.Find(role_req))
 				continue
 
 			if(isobserver(M))
@@ -695,6 +713,47 @@
 			all_factions[initial(F.name)] = F
 	all_factions += "-----"
 	return all_factions
+
+/datum/mind/proc/do_select_willpower_effect()
+	if(!ishuman(current))
+		return
+	var/mob/living/carbon/human/H = current
+	if(H.species.flags[NO_WILLPOWER])
+		return
+	if(H.stat == DEAD)
+		to_chat(H, "<span class='warning'>Мертвые не своевольничают.</span>")
+		return
+	if(!willpower_amount)
+		to_chat(H, "<span class='warning'>У вас нет воли.</span>")
+		return
+	var/datum/willpower_effect/selected_effect
+	var/list/names = list()
+	for(var/datum/willpower_effect/WE in willpower_effects)
+		names += WE.name
+
+	var/chosen_willpower_effect = tgui_input_list(H,"Вы собираете волю в кулак...","ВОЛЯ", names)
+	if(!chosen_willpower_effect)
+		return
+
+	for(var/datum/willpower_effect/selection in willpower_effects)
+		if(selection.name == chosen_willpower_effect)
+			selected_effect = selection
+
+	use_willpower_effect(selected_effect)
+
+/datum/mind/proc/can_use_willpower_effect(datum/willpower_effect/WE)
+	if(!ishuman(current))
+		return
+	if(willpower_amount < WE.cost)
+		to_chat(current, "<span class='warning'>Вам не хватает воли.</span>")
+		return FALSE
+	return WE.special_check(current)
+
+/datum/mind/proc/use_willpower_effect(datum/willpower_effect/WE)
+	if(!can_use_willpower_effect(WE))
+		return FALSE
+	WE.do_effect(current)
+	willpower_amount -= WE.cost
 
 /mob/proc/sync_mind()
 	mind_initialize()	//updates the mind (or creates and initializes one if one doesn't exist)

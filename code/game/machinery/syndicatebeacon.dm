@@ -75,7 +75,8 @@
 
 /obj/machinery/syndicate_beacon/proc/selfdestruct()
 	selfdestructing = 1
-	spawn() explosion(src.loc, rand(3,8), rand(1,3), 1, 10)
+	var/power = rand(1, 3)
+	spawn() explosion(src.loc, 0, power, power*3)
 
 
 
@@ -151,7 +152,7 @@
 			return
 		else
 			var/turf/T = loc
-			if(isturf(T) && !T.intact)
+			if(isturf(T) && T.underfloor_accessibility >= UNDERFLOOR_INTERACTABLE)
 				attached = locate() in T
 			if(!attached)
 				to_chat(user, "This device must be placed over an exposed cable.")

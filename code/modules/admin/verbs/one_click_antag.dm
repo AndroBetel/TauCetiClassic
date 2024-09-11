@@ -74,7 +74,6 @@
 
 				new_syndicate_commando.key = theghost.key
 				new_syndicate_commando.internal = new_syndicate_commando.s_store
-				new_syndicate_commando.internals.update_icon(new_syndicate_commando)
 
 				//So they don't forget their code or mission.
 
@@ -97,8 +96,7 @@
 	//First we spawn a dude.
 	var/mob/living/carbon/human/new_character = new(pick(latejoin))//The mob being spawned.
 
-	randomize_human(new_character)
-	new_character.age = rand(new_character.species.min_age, new_character.species.min_age * 1.5)
+	new_character.randomize_appearance()
 
 	new_character.dna.ready_dna(new_character)
 	new_character.key = G_found.key
@@ -111,10 +109,7 @@
 	var/syndicate_commando_rank = pick("Corporal", "Sergeant", "Staff Sergeant", "Sergeant 1st Class", "Master Sergeant", "Sergeant Major")
 	var/syndicate_commando_name = pick(last_names)
 
-	new_syndicate_commando.gender = pick(MALE, FEMALE)
-
-	var/datum/preferences/A = new()//Randomize appearance for the commando.
-	A.randomize_appearance_for(new_syndicate_commando)
+	new_syndicate_commando.randomize_appearance()
 
 	new_syndicate_commando.real_name = "[!syndicate_leader_selected ? syndicate_commando_rank : syndicate_commando_leader_rank] [syndicate_commando_name]"
 	new_syndicate_commando.name = new_syndicate_commando.real_name

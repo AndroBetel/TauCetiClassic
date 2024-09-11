@@ -12,6 +12,23 @@
 	if(loc)
 		environment = loc.return_air()
 
+	//Apparently, the person who wrote this code designed it so that
+	//blinded get reset each cycle and then get activated later in the
+	//code. Very ugly. I dont care. Moving this stuff here so its easy
+	//to find it.
+	blinded = null
+
+	//Handle temperature/pressure differences between body and environment
+	if(environment)	// More error checking -- TLE
+		handle_environment(environment)
+
+	//Check if we're on fire
+	handle_fire()
+
+	//Status updates, death etc.
+	handle_regular_status_updates()
+	update_canmove()
+
 	if (stat != DEAD && !IS_IN_STASIS(src))
 		if(!istype(src,/mob/living/carbon/monkey/diona))
 			//First, resolve location and get a breath
@@ -35,23 +52,7 @@
 		//Virus updates, duh
 		handle_virus_updates()
 
-	//Apparently, the person who wrote this code designed it so that
-	//blinded get reset each cycle and then get activated later in the
-	//code. Very ugly. I dont care. Moving this stuff here so its easy
-	//to find it.
 	reset_alerts()
-	blinded = null
-
-	//Handle temperature/pressure differences between body and environment
-	if(environment)	// More error checking -- TLE
-		handle_environment(environment)
-
-	//Check if we're on fire
-	handle_fire()
-
-	//Status updates, death etc.
-	handle_regular_status_updates()
-	update_canmove()
 
 	if(!client && stat == CONSCIOUS)
 
@@ -184,7 +185,7 @@
 			if(isnull(V)) // Trying to figure out a runtime error that keeps repeating
 				CRASH("virus2 nulled before calling activate()")
 			else
-				V.activate(src)
+				V.on_process(src)
 			// activate may have deleted the virus
 			if(!V) continue
 
@@ -202,10 +203,8 @@
 		return null
 	if(!(contents.Find(internal) && wear_mask && (wear_mask.flags & MASKINTERNALS)))
 		internal = null
-		internals?.update_icon(src)
 		return null
 
-	internals?.update_icon(src)
 	return internal.remove_air_volume(volume_needed)
 
 /mob/living/carbon/monkey/proc/handle_chemicals_in_body()
@@ -342,7 +341,9 @@
 			adjustBruteLoss(-1)
 			adjustToxLoss(-1)
 			adjustOxyLoss(-1)
-
+		else if(light_amount < -3)
+			if(race == DIONA && prob(5))
+				emote("chirp")
 		if(injecting)
 			if(gestalt && nutrition > 210)
 				gestalt.reagents.add_reagent(injecting,1)

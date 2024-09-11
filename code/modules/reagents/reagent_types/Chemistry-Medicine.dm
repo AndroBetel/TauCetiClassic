@@ -111,6 +111,9 @@
 	M.adjustHalLoss(-4)
 	if(volume > overdose)
 		M.hallucination = max(M.hallucination, 2)
+	if(iscarbon(M))
+		var/mob/living/carbon/C = M
+		C.painkiller_byeffect(5, 15)
 
 /datum/reagent/oxycodone
 	name = "Oxycodone"
@@ -128,6 +131,19 @@
 	if(volume > overdose)
 		M.adjustDrugginess(1)
 		M.hallucination = max(M.hallucination, 3)
+	if(iscarbon(M))
+		var/mob/living/carbon/C = M
+		C.painkiller_byeffect(10, 25)
+
+/datum/reagent/endorphine
+	name = "Endorphine"
+	id = "endorphine"
+	description = "Naturally produced hormone that helps human body combat pain."
+	reagent_state = LIQUID
+	color = "#cb68fc"
+	overdose = 0
+	custom_metabolism = 0.025
+	restrict_species = list(IPC, DIONA)
 
 /datum/reagent/sterilizine
 	name = "Sterilizine"
@@ -285,14 +301,25 @@
 	M.adjustToxLoss(6 * REM) // Let's just say it's thrice as poisonous.
 	return FALSE
 
+/datum/reagent/dexalinp/on_serpentid_digest(mob/living/M)
+	if(ishuman(M))
+		var/mob/living/carbon/human/S = M
+		if(S.is_bruised_organ(O_LIVER))
+			return FALSE
+	M.adjustOxyLoss(-M.getOxyLoss())
+	return TRUE
+
 /datum/reagent/tricordrazine
 	name = "Tricordrazine"
 	id = "tricordrazine"
 	description = "Tricordrazine is a highly potent stimulant, originally derived from cordrazine. Can be used to treat a wide range of injuries."
 	reagent_state = LIQUID
 	color = "#00b080" // rgb: 200, 165, 220
+	overdose = REAGENTS_OVERDOSE * 2
+	overdose_dam = 0
 	taste_message = null
 	restrict_species = list(IPC, DIONA)
+	data = list()
 
 /datum/reagent/tricordrazine/on_general_digest(mob/living/M)
 	..()
@@ -304,6 +331,13 @@
 		M.heal_bodypart_damage(0, REM)
 	if(M.getToxLoss() && prob(80))
 		M.adjustToxLoss(-1 * REM)
+	if(volume > overdose)
+		if(!data["ticks"])
+			data["ticks"] = 1
+		data["ticks"]++
+		if(data["ticks"] > 35)
+			M.vomit()
+			data["ticks"] -= rand(25, 30)
 
 /datum/reagent/anti_toxin
 	name = "Anti-Toxin (Dylovene)"
@@ -532,7 +566,6 @@
 		M.AdjustWeakened(-3)
 		var/mob/living/carbon/human/H = M
 		H.adjustHalLoss(-30)
-		H.shock_stage -= 20
 
 	if(M.bodytemperature < 310) //standard body temperature
 		M.adjustHalLoss(15)
@@ -555,6 +588,24 @@
 /datum/reagent/bicaridine/on_general_digest(mob/living/M, alien)
 	..()
 	M.heal_bodypart_damage(2 * REM, 0)
+
+/datum/reagent/xenojelly_un
+	name = "Unnatural xenojelly"
+	id = "xenojelly_un"
+	description  = "Usually, this jelly is found in the meat of xenomorphs, but it is less useful than natural."
+	reagent_state = LIQUID
+	color = "#457a45"
+	custom_metabolism = 2
+	overdose = REAGENTS_OVERDOSE / 2
+	taste_message = null
+	restrict_species = list (IPC, DIONA, VOX)
+
+/datum/reagent/xenojelly_un/on_general_digest(mob/living/M)
+	..()
+	M.heal_bodypart_damage(2,3)
+	M.adjustOxyLoss(-5)
+	M.adjustHalLoss(-5)
+	M.adjustFireLoss(-5)
 
 /datum/reagent/hyperzine
 	name = "Hyperzine"
@@ -727,7 +778,6 @@
 	M.AdjustWeakened(-3)
 	var/mob/living/carbon/human/H = M
 	H.adjustHalLoss(-30)
-	H.shock_stage -= 20
 
 /datum/reagent/nanocalcium
 	name = "Nano-Calcium"
@@ -736,7 +786,7 @@
 	reagent_state = LIQUID
 	color = "#9b3401"
 	overdose = REAGENTS_OVERDOSE
-	custom_metabolism = 0
+	custom_metabolism = 0.0001
 	taste_message = "wholeness"
 	restrict_species = list(IPC, DIONA)
 	data = list()
@@ -761,7 +811,7 @@
 			for(var/obj/item/organ/external/E in M.bodyparts)
 				if(E.is_broken())
 					to_chat(M, "<span class='notice'>You feel a burning sensation in your [E.name] as it straightens involuntarily!</span>")
-					E.brute_dam = 0
+					E.heal_damage(30)
 					E.status &= ~ORGAN_BROKEN
 					E.perma_injury = 0
 					holder.remove_reagent("nanocalcium", 10)
@@ -800,5 +850,6 @@
 			if(IO.robotic == 1)
 				if(prob(75))
 					data["ticks"]--
-		if(200 to INFINITY && IO.robotic != 2)
-			IO.heart_stop()
+		if(200 to INFINITY)
+			if(IO.robotic != 2)
+				IO.heart_stop()

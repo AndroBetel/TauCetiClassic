@@ -21,7 +21,7 @@
 		shake_camera(L, 3, 2)
 
 /obj/item/projectile/bullet/weakbullet // "rubber" bullets
-	damage = 10
+	damage = 3
 	stun = 0
 	weaken = 0
 	agony = 40
@@ -70,6 +70,11 @@
 	hitscan = 1
 	armor_multiplier = 0.7
 
+/obj/item/projectile/bullet/peabullet
+	name = "pea bullet"
+	damage = 5
+	agony = 5
+
 /obj/item/projectile/bullet/midbullet2 // 9x19
 	damage = 25
 
@@ -87,6 +92,11 @@
 
 /obj/item/projectile/bullet/rifle3
 	damage = 35
+	embed = 0
+
+/obj/item/projectile/bullet/pulserifle
+	name = "pulse bullet"
+	damage = 15
 	embed = 0
 
 /obj/item/projectile/bullet/heavy/a145
@@ -117,7 +127,11 @@
 	sharp = 0
 
 /obj/item/projectile/bullet/grenade/explosive/on_hit(atom/target, def_zone = BP_CHEST, blocked = 0)
-	explosion(target, 1, 1, 2)
+	explosion(target, 0, 1, 2)
+	return 1
+
+/obj/item/projectile/bullet/grenade/explosive/light/on_hit(atom/target, def_zone = BP_CHEST, blocked = 0)
+	explosion(target, 0, 0, 5)
 	return 1
 
 /obj/item/projectile/bullet/chem

@@ -25,6 +25,7 @@
 	var/list/air_vent_info = list()
 	var/list/air_scrub_info = list()
 
+ADD_TO_GLOBAL_LIST(/obj/machinery/alarm, air_alarms)
 /obj/machinery/alarm
 	name = "alarm"
 	icon = 'icons/obj/monitors.dmi'
@@ -635,6 +636,8 @@
 		var/max_temperature = min(selected[3] - T0C-1, MAX_TEMPERATURE) // (-/+ 1) required because it won't heat/cool, if (target_temperature == TLV)
 		var/min_temperature = max(selected[2] - T0C+1, MIN_TEMPERATURE)
 		var/input_temperature = input("What temperature would you like the system to mantain? (Capped between [min_temperature] and [max_temperature]C)", "Thermostat Controls", target_temperature - T0C) as num|null
+		if(!can_still_interact_with(usr))
+			return
 		if(isnum(input_temperature))
 			if(input_temperature > max_temperature || input_temperature < min_temperature)
 				to_chat(usr, "Temperature must be between [min_temperature]C and [max_temperature]C")
@@ -654,6 +657,8 @@
 
 				if("set_external_pressure")
 					var/input_pressure = input("What pressure you like the system to mantain?", "Pressure Controls") as num|null
+					if(!can_still_interact_with(usr))
+						return
 					if(isnum(input_pressure))
 						send_signal(device_id, list(href_list["command"] = input_pressure))
 					return FALSE
@@ -664,6 +669,8 @@
 
 				if("set_internal_pressure")
 					var/input_pressure = input("What pressure you like the system to mantain?", "Pressure Controls") as num|null
+					if(!can_still_interact_with(usr))
+						return
 					if(isnum(input_pressure))
 						send_signal(device_id, list(href_list["command"] = input_pressure))
 					return FALSE
@@ -698,6 +705,8 @@
 					var/list/selected = TLV[env]
 					var/list/thresholds = list("lower bound", "low warning", "high warning", "upper bound")
 					var/newval = input("Enter [thresholds[threshold]] for [env]", "Alarm triggers", selected[threshold]) as null|num
+					if(!can_still_interact_with(usr))
+						return
 					if (isnull(newval))
 						return TRUE
 					if (newval < 0)
@@ -772,6 +781,23 @@
 			apply_mode()
 			return FALSE
 
+/obj/machinery/alarm/proc/disable_sensors()
+	TLV["oxygen"] =			list(-1.0, -1.0,-1.0,-1.0)
+	TLV["carbon dioxide"] = list(-1.0, -1.0,-1.0,-1.0)
+	TLV["phoron"] =			list(-1.0, -1.0,-1.0,-1.0)
+	TLV["other"] =			list(-1.0, -1.0,-1.0,-1.0)
+	TLV["pressure"] =		list(-1.0, -1.0,-1.0,-1.0)
+	TLV["temperature"] =	list(-1.0, -1.0,-1.0,-1.0)
+
+/obj/machinery/alarm/proc/enable_siphon_mode()
+	for(var/device_id in alarm_area.air_scrub_names)
+		send_signal(device_id, list("power"= 1, "panic_siphon"= 1))
+	for(var/device_id in alarm_area.air_vent_names)
+		send_signal(device_id, list("power"= 0))
+
+/obj/machinery/alarm/proc/enable_highpressure_mode()
+	for(var/device_id in alarm_area.air_vent_names)
+		send_signal(device_id, list("power"= 1, "checks"= "default", "set_external_pressure"= ONE_ATMOSPHERE * 10) )
 
 /obj/machinery/alarm/attack_alien(mob/living/carbon/xenomorph/humanoid/user)
 	to_chat(user, "You don't want to break these things");
@@ -976,9 +1002,9 @@ FIRE ALARM
 	else
 		icon_state = "fire0"
 
-/obj/machinery/firealarm/fire_act(datum/gas_mixture/air, temperature, volume)
+/obj/machinery/firealarm/fire_act(datum/gas_mixture/air, exposed_temperature, exposed_volume)
 	if(detecting)
-		if(temperature > T0C+200)
+		if(exposed_temperature > T0C+200)
 			alarm()			// added check of detector status here
 	return
 
